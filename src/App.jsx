@@ -19,8 +19,10 @@ function App() {
 
   // Elite Achievements System [NEW]
   const [achievements, setAchievements] = useState(() => {
-    const saved = localStorage.getItem('achievements');
-    if (saved) return JSON.parse(saved);
+    try {
+      const saved = localStorage.getItem('achievements');
+      if (saved) return JSON.parse(saved);
+    } catch (e) { console.error("Achievement parsing error", e); }
     return [
       { id: 'early_riser', title: 'Erken Kalkan', description: 'Günün ilk seansını tamamla', icon: '🌅', unlocked: false },
       { id: 'deep_focus', title: 'Derin Odak', description: '4 seans üst üste tamamla', icon: '🧠', unlocked: false },
@@ -47,22 +49,30 @@ function App() {
 
   // New History & Analytics [NEW]
   const [focusHistory, setFocusHistory] = useState(() => {
-    const saved = localStorage.getItem('focusHistory');
-    return saved ? JSON.parse(saved) : [];
+    try {
+      const saved = localStorage.getItem('focusHistory');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) { return []; }
   });
 
   // Tasks System
   const [tasks, setTasks] = useState(() => {
-    const saved = localStorage.getItem('tasks');
-    return saved ? JSON.parse(saved) : [];
+    try {
+      const saved = localStorage.getItem('tasks');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) { return []; }
   });
   const [inputValue, setInputValue] = useState('');
   const [inputPriority, setInputPriority] = useState('medium');
 
   // Multi-Language Support [NEW]
-  const [lang, setLang] = useState(() => localStorage.getItem('lang') || 'tr');
+  const [lang, setLang] = useState(() => {
+    const saved = localStorage.getItem('lang');
+    if (saved === 'tr' || saved === 'en') return saved;
+    return 'tr';
+  });
   
-  const t = {
+  const translations = {
     tr: {
       timer: 'Zaman', tasks: 'İşler', stats: 'Performans', settings: 'Ayarlar', about: 'Hakkında',
       focus: 'Odaklanma', break: 'Mola', reset: 'Sıfırla', skip: 'Atla',
@@ -85,9 +95,11 @@ function App() {
       appSettings: 'App Settings', timeSettings: 'Time Settings (Minutes)', automation: 'Automation',
       autoBreak: 'Auto Start Breaks', autoFocus: 'Auto Start Focus',
       dataPortability: 'Data Portability', export: 'Export Data', import: 'Import Data',
-      on: 'On', off: 'Off', quickControl: 'Hızlı Kontrol'
+      on: 'On', off: 'Off', quickControl: 'Quick Control'
     }
-  }[lang];
+  };
+
+  const t = translations[lang] || translations.tr;
 
   // Quote Engine 2.0 [NEW]
   const quotes = {
@@ -128,7 +140,8 @@ function App() {
   const [currentQuote, setCurrentQuote] = useState("");
   
   useEffect(() => {
-    const pool = quotes[lang][type === 'focus' ? 'focus' : 'break'];
+    const langPool = quotes[lang] || quotes.tr;
+    const pool = langPool[type === 'focus' ? 'focus' : 'break'] || langPool.focus;
     setCurrentQuote(pool[Math.floor(Math.random() * pool.length)]);
   }, [type, lang]);
 
