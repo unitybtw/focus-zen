@@ -1,4 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable no-unused-vars */
+/* eslint-disable react-hooks/set-state-in-effect */
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Play, Pause, RotateCcw, Check, Circle, ListTodo, BarChart3, Clock, Music, X, ChevronLeft, ChevronRight, Focus, Cloud, Wind, Zap, Tag, History, Trophy, Target, TrendingUp, Settings as SettingsIcon, Settings2, Bell, Volume2, Flag, ChevronUp, ChevronDown, ListFilter, CloudRain, Trees, Download, Upload, Info, Minimize2, Maximize2 } from 'lucide-react';
 import { Howl } from 'howler';
 import './index.css';
@@ -8,537 +11,343 @@ function App() {
   const [activeTab, setActiveTab] = useState('timer'); // timer, tasks, stats
 
   // Gamification System
-  const [level, setLevel] = useState(1);
-  const [xp, setXp] = useState(0);
-  const [totalPomodoros, setTotalPomodoros] = useState(0);
-  const [tasksCompleted, setTasksCompleted] = useState(0);
-  const [sessionCount, setSessionCount] = useState(0); // For Long Break logic
-  const [dailyGoal] = useState(4);
-  const xpPerLevel = level * 100;
+  const [xp, setXp] = useState(() => parseInt(localStorage.getItem('xp')) || 0);
+  const [level, setLevel] = useState(() => parseInt(localStorage.getItem('level')) || 1);
+  const [dailyGoal] = useState(8); // 8 Pomodoros per day
+  const [totalPomodoros, setTotalPomodoros] = useState(() => parseInt(localStorage.getItem('totalPomodoros')) || 0);
+  const [tasksCompleted, setTasksCompleted] = useState(() => parseInt(localStorage.getItem('tasksCompleted')) || 0);
 
-  // Achievement System [NEW]
-  const [achievements, setAchievements] = useState([
-    { id: 'early_riser', title: 'Erken Kalkan', icon: '🌅', description: '09:00\'dan önce bir seans tamamla.', unlocked: false },
-    { id: 'deep_focus', title: 'Derin Odak', icon: '🧘', description: 'Kesintisiz 4 pomodoro tamamla.', unlocked: false },
-    { id: 'task_master', title: 'Görev Ustası', icon: '🏆', description: 'Toplam 50 görev tamamla.', unlocked: false },
-    { id: 'zen_elite', title: 'Zen Elite', icon: '💎', description: '10. seviyeye ulaş.', unlocked: false }
-  ]);
+  // Elite Achievements System [NEW]
+  const [achievements, setAchievements] = useState(() => {
+    const saved = localStorage.getItem('achievements');
+    if (saved) return JSON.parse(saved);
+    return [
+      { id: 'early_riser', title: 'Erken Kalkan', description: 'Günün ilk seansını tamamla', icon: '🌅', unlocked: false },
+      { id: 'deep_focus', title: 'Derin Odak', description: '4 seans üst üste tamamla', icon: '🧠', unlocked: false },
+      { id: 'task_master', title: 'Görev Ustası', description: '10 görev tamamla', icon: '⚔️', unlocked: false },
+      { id: 'zen_elite', title: 'Zen Elite', description: '100 seans tamamlayarak bir efsane ol', icon: '💎', unlocked: false }
+    ];
+  });
 
-  const unlockAchievement = (id) => {
-    setAchievements(prev => prev.map(a => {
-      if (a.id === id && !a.unlocked) {
-        // Trigger a notification or sound here if desired
-        return { ...a, unlocked: true };
-      }
-      return a;
-    }));
-  };
-
-  // Timer Settings State
-  const [focusDuration, setFocusDuration] = useState(25);
-  const [shortBreakDuration, setShortBreakDuration] = useState(5);
-  const [longBreakDuration, setLongBreakDuration] = useState(15);
-  const [autoStartBreaks, setAutoStartBreaks] = useState(false);
-  const [autoStartFocus, setAutoStartFocus] = useState(false);
+  // Zen Mode State [NEW]
   const [isZen, setIsZen] = useState(false);
 
-  const toggleZen = () => setIsZen(!isZen);
-
-  // Add XP
-  const gainXp = (amount) => {
-    let newXp = xp + amount;
-    if (newXp >= xpPerLevel) {
-      newXp = newXp - xpPerLevel;
-      setLevel(level + 1);
-      playLevelUpSound();
-    }
-    setXp(newXp);
-  };
-
-  // Timer State
-  const [defaultTime, setDefaultTime] = useState(25 * 60);
-  const breakTime = 5 * 60;
-  const [timeLeft, setTimeLeft] = useState(defaultTime);
+  // Timer States
+  const [timeLeft, setTimeLeft] = useState(25 * 60);
   const [isRunning, setIsRunning] = useState(false);
-  const [isBreak, setIsBreak] = useState(false);
+  const [type, setType] = useState('focus'); // focus, short, long
+  const [defaultTime, setDefaultTime] = useState(25 * 60);
 
+  // Settings & Automation [NEW]
+  const [focusDuration, setFocusDuration] = useState(() => parseInt(localStorage.getItem('focusDuration')) || 25);
+  const [shortBreakDuration, setShortBreakDuration] = useState(() => parseInt(localStorage.getItem('shortBreakDuration')) || 5);
+  const [longBreakDuration, setLongBreakDuration] = useState(() => parseInt(localStorage.getItem('longBreakDuration')) || 15);
+  const [autoStartBreaks, setAutoStartBreaks] = useState(() => localStorage.getItem('autoStartBreaks') === 'true');
+  const [autoStartFocus, setAutoStartFocus] = useState(() => localStorage.getItem('autoStartFocus') === 'true');
+
+  // New History & Analytics [NEW]
+  const [focusHistory, setFocusHistory] = useState(() => {
+    const saved = localStorage.getItem('focusHistory');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  // Tasks System
+  const [tasks, setTasks] = useState(() => {
+    const saved = localStorage.getItem('tasks');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [inputValue, setInputValue] = useState('');
+  const [inputPriority, setInputPriority] = useState('medium');
+
+  // Ambient Sounds System
   const [ambientPlaying, setAmbientPlaying] = useState(false);
-  const [lofiVolume, setLofiVolume] = useState(0.4);
-  const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
-  const audioRef = useRef(null); // Reference for Howler instance
-
-  const lofiTracks = [
-    { id: 1, name: "Local Chill", file: "/lofi.mp3" },
-    { id: 2, name: "Lofi Radio", file: "https://stream.laut.fm/lofi" },
-    { id: 3, name: "Chillhop FM", file: "https://lofi.stream.laut.fm/lofi" }
-  ];
-
-  // Main Application State
-  const [theme, setTheme] = useState('midnight'); // midnight, forest, ember, lavender
-  const [sessionTag, setSessionTag] = useState('İş'); // İş, Eğitim, Yaratıcı, Kişisel
-  const [focusHistory, setFocusHistory] = useState([]);
+  const [selectedAmbient, setSelectedAmbient] = useState('lofi'); // lofi, white, rain, forest
+  const [volume, setVolume] = useState(0.5);
   
-  useEffect(() => {
-    const handleMouseMove = (e) => {
-      const x = (e.clientX / window.innerWidth - 0.5) * 20;
-      const y = (e.clientY / window.innerHeight - 0.5) * 20;
-      document.documentElement.style.setProperty('--mouse-x', `${x}px`);
-      document.documentElement.style.setProperty('--mouse-y', `${y}px`);
-    };
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+  const lofiRef = useRef(null);
+  const soundRefs = useRef({});
+
+  // UTILITIES
+  const playSfx = useCallback((sfxType) => {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (sfxType === 'complete') {
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(440, audioCtx.currentTime);
+      if (oscillator.frequency.exponentialRampToValueAtTime) {
+        oscillator.frequency.exponentialRampToValueAtTime(110, audioCtx.currentTime + 1.5);
+      }
+      gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.5);
+      oscillator.start();
+      oscillator.stop(audioCtx.currentTime + 1.5);
+    } else if (sfxType === 'levelup') {
+       [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+         const osc = audioCtx.createOscillator();
+         const g = audioCtx.createGain();
+         osc.connect(g);
+         g.connect(audioCtx.destination);
+         osc.type = 'triangle';
+         osc.frequency.setValueAtTime(freq, audioCtx.currentTime + i * 0.1);
+         g.gain.setValueAtTime(0.3, audioCtx.currentTime + i * 0.1);
+         g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + i * 0.1 + 0.3);
+         osc.start(audioCtx.currentTime + i * 0.1);
+         osc.stop(audioCtx.currentTime + i * 0.1 + 0.3);
+       });
+    }
   }, []);
 
+  const unlockAchievement = useCallback((id) => {
+    setAchievements(prev => prev.map(a => 
+      (a.id === id && !a.unlocked) ? { ...a, unlocked: true } : a
+    ));
+  }, []);
+
+  // TAGS
   const tags = [
-    { label: 'İş', icon: '💼', color: '#3b82f6' },
-    { label: 'Eğitim', icon: '🎓', color: '#10b981' },
-    { label: 'Yaratıcı', icon: '🎨', color: '#8b5cf6' },
-    { label: 'Kişisel', icon: '🧘', color: '#f43f5e' }
+    { label: 'İş', color: '#3b82f6', icon: <Zap size={10} /> },
+    { label: 'Eğitim', color: '#8b5cf6', icon: <Cloud size={10} /> },
+    { label: 'Kişisel', color: '#10b981', icon: <Wind size={10} /> }
   ];
+  const [activeTagItem, setActiveTagItem] = useState(tags[0]);
 
-  // Persistence: Load on startup
+  // EFFECTS
   useEffect(() => {
-    const saved = localStorage.getItem('focusZen_progress');
-    if (saved) {
-      const data = JSON.parse(saved);
-      setLevel(data.level || 1);
-      setXp(data.xp || 0);
-      setTotalPomodoros(data.totalPomodoros || 0);
-      setTasksCompleted(data.tasksCompleted || 0);
-      setFocusHistory(data.focusHistory || []);
-      setTheme(data.theme || 'midnight');
-      if (data.focusDuration) {
-        setFocusDuration(data.focusDuration);
-        setDefaultTime(data.focusDuration * 60);
-        setTimeLeft(data.focusDuration * 60);
-      }
-      if (data.shortBreakDuration) setShortBreakDuration(data.shortBreakDuration);
-      if (data.longBreakDuration) setLongBreakDuration(data.longBreakDuration);
-      if (data.autoStartBreaks) setAutoStartBreaks(data.autoStartBreaks);
-      if (data.autoStartFocus) setAutoStartFocus(data.autoStartFocus);
-      if (data.sessionCount) setSessionCount(data.sessionCount);
-      if (data.achievements) setAchievements(data.achievements);
-    }
-  }, []);
-
-  // Persistence: Save on change
-  useEffect(() => {
-    const data = { 
-      level, xp, totalPomodoros, tasksCompleted, focusHistory, theme,
-      focusDuration, shortBreakDuration, longBreakDuration, 
-      autoStartBreaks, autoStartFocus, sessionCount, achievements
-    };
-    localStorage.setItem('focusZen_progress', JSON.stringify(data));
-    document.documentElement.setAttribute('data-theme', theme);
-  }, [level, xp, totalPomodoros, tasksCompleted, focusHistory, theme, focusDuration, shortBreakDuration, longBreakDuration, autoStartBreaks, autoStartFocus, sessionCount, achievements]);
-
-  /**
-   * Ambient Noise Engine (Web Audio API)
-   * Generates White, Rain, and Forest noise using real-time filters.
-   */
-  const [noisePlaying, setNoisePlaying] = useState(false);
-  const [noiseType, setNoiseType] = useState('white'); // white, rain, forest
-  const [noiseVolume, setNoiseVolume] = useState(0.2);
-  const noiseNodeRef = useRef(null);
-
+    localStorage.setItem('achievements', JSON.stringify(achievements));
+  }, [achievements]);
 
   useEffect(() => {
-    // Unload previous track if exists
-    if (audioRef.current) {
-      audioRef.current.unload();
-    }
+    localStorage.setItem('focusHistory', JSON.stringify(focusHistory));
+    localStorage.setItem('focusDuration', focusDuration);
+    localStorage.setItem('shortBreakDuration', shortBreakDuration);
+    localStorage.setItem('longBreakDuration', longBreakDuration);
+    localStorage.setItem('autoStartBreaks', autoStartBreaks);
+    localStorage.setItem('autoStartFocus', autoStartFocus);
+  }, [focusHistory, focusDuration, shortBreakDuration, longBreakDuration, autoStartBreaks, autoStartFocus]);
 
-    // Initialize Howler with local lofi track downloaded to public folder
-    audioRef.current = new Howl({
-      src: [lofiTracks[currentTrackIndex].file],
-      format: ['mp3'],
-      loop: true,
-      volume: lofiVolume,
-      html5: true // Force HTML5 Audio so it streams properly without filling RAM
-    });
-
-    if (ambientPlaying) {
-      audioRef.current.play();
-    }
-
-    // Request notification permission on boot
-    if ("Notification" in window && Notification.permission !== "granted") {
-      Notification.requestPermission();
-    }
-
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.unload();
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentTrackIndex]);
-
-  // Keyboard Shortcuts [NEW]
   useEffect(() => {
-    const handleKeyDown = (e) => {
-      // Ignore if user is typing in an input
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+  }, [tasks]);
 
-      switch(e.key.toLowerCase()) {
-        case ' ':
-          e.preventDefault();
-          setIsRunning(prev => !prev);
-          break;
-        case 'r':
-          setIsRunning(false);
-          // sessionCount used instead of nextSessionCount for reset logic alignment
-          setTimeLeft(isBreak ? (sessionCount % 4 === 0 ? longBreakDuration : shortBreakDuration) * 60 : focusDuration * 60);
-          break;
-        case '1': setActiveTab('timer'); break;
-        case '2': setActiveTab('tasks'); break;
-        case '3': setActiveTab('stats'); break;
-        case '4': setActiveTab('settings'); break;
-        default: break;
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isBreak, focusDuration, shortBreakDuration, longBreakDuration, sessionCount]);
-
-  const toggleLofi = () => {
-    if (!ambientPlaying) {
-      audioRef.current.play();
-      setAmbientPlaying(true);
-    } else {
-      audioRef.current.pause();
-      setAmbientPlaying(false);
+  useEffect(() => {
+    const xpNeeded = level * 100;
+    if (xp >= xpNeeded) {
+      setXp(x => x - xpNeeded);
+      setLevel(l => l + 1);
+      playSfx('levelup');
     }
-  };
+    localStorage.setItem('xp', xp);
+    localStorage.setItem('level', level);
+  }, [xp, level]);
 
-  const changeLofiVolume = (e) => {
-    const vol = parseFloat(e.target.value);
-    setLofiVolume(vol);
-    if (audioRef.current) {
-      audioRef.current.volume(vol);
-    }
-  };
-
-  /**
-   * Toggles the synthesized noise machine.
-   * Uses BiquadFilterNode to create realistic Rain and Forest textures.
-   * @param {string} type - 'white', 'rain', or 'forest'
-   */
-  const toggleNoise = (type = 'white') => {
-    // If clicking same type while playing, stop it
-    if (noisePlaying && noiseType === type) {
-      if (noiseNodeRef.current) {
-        noiseNodeRef.current.source.stop();
-        noiseNodeRef.current = null;
-      }
-      setNoisePlaying(false);
-      return;
-    }
-
-    // If already playing another type, stop first
-    if (noisePlaying) {
-      if (noiseNodeRef.current) {
-        noiseNodeRef.current.source.stop();
-      }
-    }
-
-    if (!audioCtxRef.current) audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
-    const ctx = audioCtxRef.current;
+  // TIMER CYCLE
+  const handleTimerComplete = useCallback(() => {
+    setIsRunning(false);
+    playSfx('complete');
     
-    const bufferSize = 2 * ctx.sampleRate;
-    const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-    const output = noiseBuffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) {
-      output[i] = Math.random() * 2 - 1;
-    }
-
-    const source = ctx.createBufferSource();
-    source.buffer = noiseBuffer;
-    source.loop = true;
-
-    const gainNode = ctx.createGain();
-    const filter = ctx.createBiquadFilter();
-
-    if (type === 'rain') {
-      filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(400, ctx.currentTime);
-      gainNode.gain.setValueAtTime(noiseVolume * 1.5, ctx.currentTime);
-    } else if (type === 'forest') {
-      filter.type = 'bandpass';
-      filter.frequency.setValueAtTime(800, ctx.currentTime);
-      filter.Q.setValueAtTime(0.5, ctx.currentTime);
-      gainNode.gain.setValueAtTime(noiseVolume * 0.8, ctx.currentTime);
-    } else {
-      filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(1000, ctx.currentTime);
-      gainNode.gain.setValueAtTime(noiseVolume, ctx.currentTime);
-    }
-
-    source.connect(filter);
-    filter.connect(gainNode);
-    gainNode.connect(ctx.destination);
-    
-    source.start();
-    noiseNodeRef.current = { source, gain: gainNode, filter };
-    setNoiseType(type);
-    setNoisePlaying(true);
-  };
-
-  const changeNoiseVolume = (e) => {
-    const vol = parseFloat(e.target.value);
-    setNoiseVolume(vol);
-    if (noiseNodeRef.current) {
-      noiseNodeRef.current.gain.gain.setValueAtTime(vol, audioCtxRef.current.currentTime);
-    }
-  };
-
-  const nextTrack = () => {
-    setCurrentTrackIndex((prev) => (prev + 1) % lofiTracks.length);
-  };
-
-  const prevTrack = () => {
-    setCurrentTrackIndex((prev) => (prev - 1 + lofiTracks.length) % lofiTracks.length);
-  };
-
-  // Quotes Array for a more organic feel
-  const quotes = [
-    "İşlenmemiş elmas sadece bir taştır.",
-    "Büyük işler başarmak için, sadece harekete geçmek yetmez.",
-    "Zor yollar, çoğu zaman en güzel yerlere çıkar."
-  ];
-  const [currentQuote] = useState(() => quotes[Math.floor(Math.random() * quotes.length)]);
-
-  // Tasks State
-  const [tasks, setTasks] = useState([
-    { id: 1, text: "Günün öncelikli görevini belirle", completed: false, xpClaimed: false },
-    { id: 2, text: "FocusZen uygulamasını incele", completed: false, xpClaimed: false }
-  ]);
-  const [inputValue, setInputValue] = useState("");
-  const [inputPriority, setInputPriority] = useState('medium'); // low, medium, high
-
-  // Refs for audio (Using browser oscillator API for futuristic beep sounds)
-  const audioCtxRef = useRef(null);
-
-  // Sound Synthesizer (No external files needed) - Zen Bell
-  /**
-   * Plays a high-fidelity 'Zen Bowl' resonance using additive synthesis.
-   * Frequencies tuned to 432Hz and its harmonics.
-   */
-  const playAlarmSound = () => {
-    if (!audioCtxRef.current) audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
-    const ctx = audioCtxRef.current;
-    
-    // Zen Bowl frequencies
-    const frequencies = [432, 864, 1296];
-    
-    frequencies.forEach((freq, i) => {
-      const osc = ctx.createOscillator();
-      const gainNode = ctx.createGain();
-      
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, ctx.currentTime);
-      
-      gainNode.gain.setValueAtTime(0, ctx.currentTime);
-      // Fade in quickly
-      gainNode.gain.linearRampToValueAtTime(0.3 / (i + 1), ctx.currentTime + 0.1);
-      // Long fading resonance
-      gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 3.5);
-      
-      osc.connect(gainNode);
-      gainNode.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 4);
-    });
-  };
-
-  /**
-   * Handles logic for session transitions (Focus <-> Break).
-   * Orchestrates sound, notifications, history logging, and XP gain.
-   */
-  const handleSessionEnd = () => {
-    playAlarmSound();
-
-    // Trigger Native Notification 2.0 [NEW]
-    if ("Notification" in window && Notification.permission === "granted") {
-      const summary = !isBreak 
-        ? `🔥 Seans Bitti! Toplam: ${totalPomodoros + 1} seans. Seviye: ${level}`
-        : `⚡ Mola Bitti! Odaklanma vakti.`;
-      
-      new Notification("FocusZen", {
-        body: summary,
-        icon: "/icon.png", // In a real app, this would be the generated asset
-        badge: "/icon.png",
-        silent: false,
-        tag: "focus-zen-alert"
+    if (type === 'focus') {
+      setXp(prev => prev + 25);
+      setTotalPomodoros(prev => {
+        const newVal = prev + 1;
+        localStorage.setItem('totalPomodoros', newVal);
+        if (newVal === 1) unlockAchievement('early_riser');
+        if (newVal === 100) unlockAchievement('zen_elite');
+        return newVal;
       });
-    }
-
-    if (!isBreak) {
-      const nextSessionCount = sessionCount + 1;
-      setSessionCount(nextSessionCount);
-      setTotalPomodoros(prev => prev + 1);
-      gainXp(50);
       
       const newEntry = {
         id: Date.now(),
-        tag: sessionTag,
+        type: 'focus',
         duration: focusDuration,
         date: new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' }),
         day: new Date().toLocaleDateString('tr-TR', { weekday: 'short' }),
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        tasksCompleted: tasks.filter(t => t.completed).length
+        time: new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
+        tag: activeTagItem?.label || 'Genel',
+        tasksCompleted: 0
       };
-      setFocusHistory(prev => [newEntry, ...prev].slice(0, 10)); // Increased to 10 entries
+      setFocusHistory(prev => [newEntry, ...prev].slice(0, 10));
 
-      setIsBreak(true);
-      const isLongBreak = nextSessionCount % 4 === 0;
-      const nextDuration = isLongBreak ? longBreakDuration : shortBreakDuration;
-      setTimeLeft(nextDuration * 60);
-      setDefaultTime(nextDuration * 60);
-      
-      if (autoStartBreaks) setIsRunning(true);
-      checkAchievements();
-    } else {
-      setIsBreak(false);
-      setTimeLeft(focusDuration * 60);
-      setDefaultTime(focusDuration * 60);
-      
-      if (autoStartFocus) setIsRunning(true);
-      
-      // Reset Audio Ducking volume
-      if (noiseNodeRef.current) {
-        noiseNodeRef.current.gain.gain.setValueAtTime(noiseVolume, audioCtxRef.current.currentTime);
+      if (autoStartBreaks) {
+        setType('short');
+        setTimeLeft(shortBreakDuration * 60);
+        setIsRunning(true);
+      } else {
+        setType('short');
+        setTimeLeft(shortBreakDuration * 60);
       }
-      if (audioRef.current) {
-        audioRef.current.volume(lofiVolume);
+    } else {
+      if (autoStartFocus) {
+        setType('focus');
+        setTimeLeft(focusDuration * 60);
+        setIsRunning(true);
+      } else {
+        setType('focus');
+        setTimeLeft(focusDuration * 60);
       }
     }
-  };
+  }, [type, focusDuration, activeTagItem, autoStartBreaks, shortBreakDuration, autoStartFocus, playSfx, unlockAchievement]);
 
   useEffect(() => {
-    let interval;
+    let interval = null;
     if (isRunning && timeLeft > 0) {
       interval = setInterval(() => {
-        setTimeLeft((prev) => {
-          const nextVal = prev - 1;
-          
-          // Audio Ducking (Commit #20)
-          if (nextVal <= 10 && nextVal > 0) {
-            const duckFactor = nextVal / 10;
-            if (noiseNodeRef.current) {
-              noiseNodeRef.current.gain.gain.setValueAtTime(noiseVolume * duckFactor, audioCtxRef.current.currentTime);
-            }
-            if (audioRef.current && ambientPlaying) {
-              audioRef.current.volume(lofiVolume * duckFactor);
+        setTimeLeft(prev => {
+          const next = prev - 1;
+          if (next <= 10 && ambientPlaying) {
+            const duckFactor = next / 10;
+            if (selectedAmbient === 'lofi' && lofiRef.current) {
+              lofiRef.current.volume(volume * duckFactor);
+            } else if (soundRefs.current[selectedAmbient]) {
+              soundRefs.current[selectedAmbient]?.gain.gain.setTargetAtTime(volume * duckFactor, 0, 0.1);
             }
           }
-          
-          return nextVal;
+          return next;
         });
       }, 1000);
     } else if (timeLeft === 0 && isRunning) {
-      setIsRunning(false);
-      handleSessionEnd();
+      handleTimerComplete();
     }
     return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRunning, timeLeft]);
 
+  // SOUND INITIALIZATION
+  useEffect(() => {
+    lofiRef.current = new Howl({
+      src: ['https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'],
+      loop: true,
+      volume: volume,
+      html5: true
+    });
 
-  const playLevelUpSound = () => {
-    if (!audioCtxRef.current) audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
-    const ctx = audioCtxRef.current;
-    
-    const osc = ctx.createOscillator();
-    const gainNode = ctx.createGain();
-    
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
-    osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1); // E5
-    osc.frequency.setValueAtTime(783.99, ctx.currentTime + 0.2); // G5
-    osc.frequency.setValueAtTime(1046.50, ctx.currentTime + 0.3); // C6
-    
-    gainNode.gain.setValueAtTime(0, ctx.currentTime);
-    gainNode.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.1);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.8);
-    
-    osc.connect(gainNode);
-    gainNode.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.8);
-  };
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const createNoise = (color) => {
+      const bufferSize = 2 * audioCtx.sampleRate;
+      const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const output = noiseBuffer.getChannelData(0);
+      let lastOut = 0;
+      for (let i = 0; i < bufferSize; i++) {
+        const white = Math.random() * 2 - 1;
+        if (color === 'white') output[i] = white;
+        else if (color === 'pink') {
+          output[i] = (lastOut + (0.02 * white)) / 1.02;
+          lastOut = output[i];
+          output[i] *= 3.5;
+        }
+      }
+      const source = audioCtx.createBufferSource();
+      source.buffer = noiseBuffer;
+      source.loop = true;
+      const gainNode = audioCtx.createGain();
+      gainNode.gain.value = 0;
+      source.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      return { source, gain: gainNode };
+    };
 
-  const checkAchievements = () => {
-    // 1. Early Riser: Before 9:00 AM
-    const hour = new Date().getHours();
-    if (hour < 9) unlockAchievement('early_riser');
+    soundRefs.current = {
+      white: createNoise('white'),
+      rain: createNoise('pink'),
+      forest: createNoise('pink'),
+    };
 
-    // 2. Deep Focus: 4 Pomodoros in a row
-    if (sessionCount >= 4) unlockAchievement('deep_focus');
+    return () => {
+      if (lofiRef.current) lofiRef.current.stop();
+      Object.values(soundRefs.current).forEach(s => s.source.stop());
+    };
+  }, []);
 
-    // 3. Task Master: 50 Tasks
-    if (tasksCompleted >= 50) unlockAchievement('task_master');
+  useEffect(() => {
+    if (lofiRef.current) lofiRef.current.volume(volume);
+    Object.values(soundRefs.current).forEach(s => {
+      if (ambientPlaying && selectedAmbient !== 'lofi') {
+         s.gain.gain.setTargetAtTime(volume, 0, 0.1);
+      }
+    });
+  }, [volume]);
 
-    // 4. Zen Elite: Level 10
-    if (level >= 10) unlockAchievement('zen_elite');
-  };
-
-  // Timer controls
-  const toggleTimer = () => setIsRunning(!isRunning);
-  const resetTimer = () => {
-    setIsRunning(false);
-    setTimeLeft(isBreak ? breakTime : defaultTime);
-  };
-
-  const changeDefaultTime = (minutes) => {
-    if (!isRunning && !isBreak) {
-      const newTime = minutes * 60;
-      setDefaultTime(newTime);
-      setTimeLeft(newTime);
-    }
-  };
-
-  const formatTime = (seconds) => {
-    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
-    const s = (seconds % 60).toString().padStart(2, '0');
-    return `${m}:${s}`;
-  };
-
-  // Task Controls
+  // HANDLERS
   const addTask = (e) => {
     if (e.key === 'Enter' && inputValue.trim()) {
-      setTasks([{ id: Date.now(), text: inputValue, completed: false, xpClaimed: false, priority: inputPriority }, ...tasks]);
-      setInputValue("");
+      const newTask = { id: Date.now(), text: inputValue, completed: false, priority: inputPriority, xpClaimed: false };
+      setTasks(prev => [newTask, ...prev]);
+      setInputValue('');
     }
   };
 
   const toggleTask = (id) => {
-    setTasks(tasks.map(t => {
+    setTasks(prev => prev.map(t => {
       if (t.id === id) {
-        if (!t.completed && !t.xpClaimed) {
-          gainXp(10); // 10 XP only for the first time
-          setTasksCompleted(prev => prev + 1);
-          return { ...t, completed: true, xpClaimed: true }; // Mark as claimed
+        if (!t.completed) {
+          setXp(x => x + 10);
+          setTasksCompleted(c => c + 1);
+          return { ...t, completed: true, xpClaimed: true };
         }
-        return { ...t, completed: !t.completed }; // Just toggle visuals after
+        return { ...t, completed: !t.completed };
       }
       return t;
     }));
   };
 
-  // Data Portability [NEW]
+  const toggleLofi = () => {
+    if (!ambientPlaying) {
+      if (selectedAmbient === 'lofi') lofiRef.current.play();
+      else {
+        soundRefs.current[selectedAmbient].source.start(0);
+        soundRefs.current[selectedAmbient].gain.gain.setTargetAtTime(volume, 0, 0.1);
+      }
+      setAmbientPlaying(true);
+    } else {
+      if (selectedAmbient === 'lofi') lofiRef.current.pause();
+      else {
+        soundRefs.current[selectedAmbient].gain.gain.setTargetAtTime(0, 0, 0.1);
+      }
+      setAmbientPlaying(false);
+    }
+  };
+
+  const changeAmbient = (mode) => {
+    const wasPlaying = ambientPlaying;
+    if (wasPlaying) toggleLofi();
+    setSelectedAmbient(mode);
+    if (wasPlaying) setTimeout(() => toggleLofi(), 100);
+  };
+
+  const startFocus = () => {
+    setType('focus');
+    setTimeLeft(focusDuration * 60);
+    setIsRunning(true);
+    if (lofiRef.current) lofiRef.current.volume(volume);
+  };
+
+  const startShortBreak = () => {
+    setType('short');
+    setTimeLeft(shortBreakDuration * 60);
+    setIsRunning(true);
+  };
+
+  const startLongBreak = () => {
+    setType('long');
+    setTimeLeft(longBreakDuration * 60);
+    setIsRunning(true);
+  };
+
+  const resetTimer = () => {
+    setIsRunning(false);
+    setTimeLeft(defaultTime);
+  };
+
+  const toggleZen = () => setIsZen(!isZen);
+
   const exportData = () => {
-    const data = {
-      level, xp, totalPomodoros, tasksCompleted, focusHistory, theme, 
-      focusDuration, shortBreakDuration, longBreakDuration, 
-      autoStartBreaks, autoStartFocus, sessionCount, tasks
-    };
+    const data = { xp, level, totalPomodoros, tasksCompleted, achievements, focusDuration, shortBreakDuration, longBreakDuration, autoStartBreaks, autoStartFocus, focusHistory, tasks };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `focus-zen-backup-${new Date().toISOString().slice(0,10)}.json`;
+    link.download = `focuszen-backup-${new Date().toISOString().slice(0,10)}.json`;
     link.click();
   };
 
@@ -549,46 +358,32 @@ function App() {
     reader.onload = (event) => {
       try {
         const data = JSON.parse(event.target.result);
-        if (data.level) setLevel(data.level);
-        if (data.xp) setXp(data.xp);
-        if (data.totalPomodoros) setTotalPomodoros(data.totalPomodoros);
-        if (data.tasksCompleted) setTasksCompleted(data.tasksCompleted);
-        if (data.focusHistory) setFocusHistory(data.focusHistory);
-        if (data.theme) setTheme(data.theme);
-        if (data.focusDuration) setFocusDuration(data.focusDuration);
-        if (data.shortBreakDuration) setShortBreakDuration(data.shortBreakDuration);
-        if (data.longBreakDuration) setLongBreakDuration(data.longBreakDuration);
-        if (data.autoStartBreaks) setAutoStartBreaks(data.autoStartBreaks);
-        if (data.autoStartFocus) setAutoStartFocus(data.autoStartFocus);
-        if (data.sessionCount) setSessionCount(data.sessionCount);
-        if (data.tasks) setTasks(data.tasks);
-        alert('Veriler başarıyla içe aktarıldı!');
-      } catch {
+        if (data.xp !== undefined) setXp(data.xp);
+        if (data.level !== undefined) setLevel(data.level);
+        if (data.totalPomodoros !== undefined) setTotalPomodoros(data.totalPomodoros);
+        if (data.tasksCompleted !== undefined) setTasksCompleted(data.tasksCompleted);
+        alert('Veriler başarıyla yüklendi!');
+      } catch (err) {
+        console.error(err);
         alert('Hata: Geçersiz dosya formatı.');
       }
     };
     reader.readAsText(file);
   };
 
-
   return (
     <div className={`app-wrapper ${isRunning ? 'is-focusing' : ''} ${isZen ? 'zen-mode' : ''}`}>
-      {/* Background ambient lighting effects */}
       <div className="ambient-blob blob-1"></div>
       <div className="ambient-blob blob-2"></div>
       
       <div className="glass-container">
-        {/* Electron Drag Region for Frameless Window */}
         <div className="drag-region"></div>
-        
-        {/* Sidebar: Primary Navigation and Daily Goal Progress */}
         <nav className="sidebar no-drag">
           <div className="brand">
             <div className="brand-icon elite-glow">
               <img src="/assets/icon-elite.png" alt="FocusZen Elite" style={{ width: '32px', height: '32px', borderRadius: '8px' }} />
             </div>
           </div>
-          
           <div className="nav-items">
             <button className={`nav-btn ${activeTab === 'timer' ? 'active' : ''}`} onClick={() => setActiveTab('timer')}>
               <Clock size={20} />
@@ -597,9 +392,7 @@ function App() {
             <button className={`nav-btn ${activeTab === 'tasks' ? 'active' : ''}`} onClick={() => setActiveTab('tasks')}>
               <ListTodo size={20} />
               <span>İşler</span>
-              {tasks.filter(t => !t.completed).length > 0 && 
-                <div className="task-badge">{tasks.filter(t => !t.completed).length}</div>
-              }
+              {tasks.filter(t => !t.completed).length > 0 && <div className="task-badge">{tasks.filter(t => !t.completed).length}</div>}
             </button>
             <button className={`nav-btn ${activeTab === 'stats' ? 'active' : ''}`} onClick={() => setActiveTab('stats')}>
               <BarChart3 size={20} />
@@ -614,358 +407,134 @@ function App() {
               <span>Hakkında</span>
             </button>
           </div>
-
-          {/* Daily Goal Progress Ring */}
           <div className="goal-preview" title={`Günlük Hedef: ${totalPomodoros}/${dailyGoal}`}>
             <svg viewBox="0 0 36 36" className="circular-chart">
               <path className="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-              <path className="circle" 
-                strokeDasharray={`${Math.min((totalPomodoros / dailyGoal) * 100, 100)}, 100`}
-                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" 
-              />
+              <path className="circle" strokeDasharray={`${Math.min((totalPomodoros / dailyGoal) * 100, 100)}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
             </svg>
             <div className="goal-text">{totalPomodoros}</div>
           </div>
-
           <div className="ambient-toggle">
             <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', cursor: 'pointer', paddingBottom: '10px'}} onClick={toggleLofi}>
-              <div className={`visualizer ${ambientPlaying ? 'playing' : ''}`}>
-                <span></span><span></span><span></span><span></span>
-              </div>
+              <div className={`visualizer ${ambientPlaying ? 'playing' : ''}`}><span></span><span></span><span></span><span></span></div>
               <Music size={20} />
               <span style={{fontSize: '0.75rem', fontWeight: 500}}>Lo-Fi</span>
             </div>
-            
             {ambientPlaying && (
               <div className="lofi-controls no-drag fade-in">
-                <div className="track-selector">
-                  <button className="track-btn" onClick={prevTrack}><ChevronLeft size={16} /></button>
-                  <span className="track-name">{lofiTracks[currentTrackIndex].name}</span>
-                  <button className="track-btn" onClick={nextTrack}><ChevronRight size={16} /></button>
+                <div className="ambient-presets">
+                  {['lofi', 'white', 'rain', 'forest'].map(m => (
+                    <button key={m} className={`preset-btn ${selectedAmbient === m ? 'active' : ''}`} onClick={() => changeAmbient(m)}>
+                      {m === 'lofi' && <Music size={14} />}
+                      {m === 'white' && <Cloud size={14} />}
+                      {m === 'rain' && <CloudRain size={14} />}
+                      {m === 'forest' && <Trees size={14} />}
+                    </button>
+                  ))}
                 </div>
-                <input 
-                  type="range" 
-                  min="0" max="1" step="0.05" 
-                  value={lofiVolume} 
-                  onChange={changeLofiVolume} 
-                  className="volume-slider"
-                />
-
-                <div className="divider"></div>
-
-                <div className="noise-selector-group">
-                  <div className="noise-header">
-                    <Volume2 size={14} />
-                    <span>Ambiyans (Gürültü)</span>
-                  </div>
-                  <div className="noise-options">
-                    <button className={`noise-opt-btn ${noisePlaying && noiseType === 'white' ? 'active' : ''}`} onClick={() => toggleNoise('white')} title="Beyaz Gürültü">
-                      <Wind size={14} />
-                    </button>
-                    <button className={`noise-opt-btn ${noisePlaying && noiseType === 'rain' ? 'active' : ''}`} onClick={() => toggleNoise('rain')} title="Yağmur">
-                      <CloudRain size={14} />
-                    </button>
-                    <button className={`noise-opt-btn ${noisePlaying && noiseType === 'forest' ? 'active' : ''}`} onClick={() => toggleNoise('forest')} title="Orman">
-                      <Trees size={14} />
-                    </button>
-                  </div>
-                </div>
-
-                {noisePlaying && (
-                  <input 
-                    type="range" 
-                    min="0" max="0.5" step="0.02" 
-                    value={noiseVolume} 
-                    onChange={changeNoiseVolume} 
-                    className="volume-slider"
-                  />
-                )}
+                {selectedAmbient === 'lofi' && <input type="range" min="0" max="1" step="0.01" value={volume} onChange={(e) => setVolume(parseFloat(e.target.value))} className="volume-slider" />}
               </div>
             )}
           </div>
         </nav>
-
-        {/* Main Content Area: Dynamically switches based on activeTab (timer, tasks, stats, settings, about) */}
         <main className="content-area">
-          {/* Header */}
-          <header className="header no-drag">
-            <div className="header-spacers"></div>
-            
-            <div className="theme-selector-bar">
-              {[
-                { id: 'midnight', color: '#3b82f6' },
-                { id: 'forest', color: '#10b981' },
-                { id: 'ember', color: '#f43f5e' },
-                { id: 'lavender', color: '#8b5cf6' }
-              ].map(t => (
-                <div 
-                  key={t.id} 
-                  className={`theme-bubble ${theme === t.id ? 'active' : ''}`}
-                  style={{ background: t.color }}
-                  onClick={() => setTheme(t.id)}
-                  title={`${t.id.charAt(0).toUpperCase() + t.id.slice(1)} Teması`}
-                />
-              ))}
-              <div className="divider-v"></div>
-              <button className={`zen-toggle-btn ${isZen ? 'active' : ''}`} onClick={toggleZen} title={isZen ? "Zen Modundan Çık" : "Zen Moduna Gir"}>
-                {isZen ? <Maximize2 size={14} /> : <Minimize2 size={14} />}
-              </button>
-            </div>
-
-            <div className="streak-badge" title="Günlük Odak Serisi">
-              <Zap size={14} fill="currentColor" />
-              <span>3 Gün</span>
-            </div>
-
-            <div className="user-profile">
-              <div className="level-badge">LVL {level}</div>
-              <div className="xp-bar-container">
-                <div className="xp-bar" style={{width: `${(xp / xpPerLevel) * 100}%`}}></div>
+          <div key={activeTab} className="tab-wrapper fade-blur-in">
+            <header className="header no-drag">
+              <div className="header-spacers"></div>
+              <div className="theme-selector-bar">
+                {[{ id: 'midnight', color: '#3b82f6' }, { id: 'forest', color: '#10b981' }, { id: 'ember', color: '#f43f5e' }, { id: 'lavender', color: '#8b5cf6' }].map(t => (
+                  <button key={t.id} className="theme-dot" style={{ backgroundColor: t.color }} onClick={() => document.documentElement.setAttribute('data-theme', t.id)} title={t.id.charAt(0).toUpperCase() + t.id.slice(1)} />
+                ))}
+                <div className="v-divider"></div>
+                <button className={`zen-toggle-btn ${isZen ? 'active' : ''}`} onClick={toggleZen} title={isZen ? 'Hızlı Modu Kapat' : 'Zen (Minimalist) Modu Aç'}>
+                  {isZen ? <Maximize2 size={18} /> : <Minimize2 size={18} />}
+                </button>
               </div>
-              <span className="xp-text">{xp}/{xpPerLevel} XP</span>
-            </div>
-          </header>
-
-          <div className="tab-render no-drag fade-in">
-            {/* TIMER TAB */}
+              <div className="profile-compact">
+                <div className="xp-bar-container">
+                  <div className="xp-label">Lvl {level}</div>
+                  <div className="xp-progress-bg"><div className="xp-progress-fill" style={{ width: `${(xp / (level * 100)) * 100}%` }}></div></div>
+                </div>
+              </div>
+            </header>
             {activeTab === 'timer' && (
               <div className="timer-tab">
-                
-                <div className="timer-circle">
-                  <div className="timer-text">{formatTime(timeLeft)}</div>
-                  <div className="status-label">
-                    <span className={`status-dot ${isBreak ? 'break' : 'focus'}`}></span>
-                    {isBreak ? 'Mola Vakti' : 'Focus Modu'}
+                <div className="timer-display-container">
+                  <div className={`timer-ring ${type}`}>
+                    <svg viewBox="0 0 100 100">
+                      <circle className="ring-bg" cx="50" cy="50" r="45" />
+                      <circle className="ring-progress" cx="50" cy="50" r="45" style={{ strokeDasharray: 283, strokeDashoffset: 283 - (timeLeft / defaultTime) * 283 }} />
+                    </svg>
+                    <div className="timer-content">
+                      <span className="timer-type">{type === 'focus' ? 'Odaklanma' : 'Mola'}</span>
+                      <span className="timer-clock">{Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}</span>
+                    </div>
                   </div>
-                  <div className={`timer-ring ${isRunning ? 'spin' : ''}`}></div>
                 </div>
-
-                <div className="controls">
-                  <button className="control-btn primary" onClick={toggleTimer}>
-                    {isRunning ? <Pause size={24} /> : <Play size={24} />}
-                  </button>
-                  <button className="control-btn secondary" onClick={resetTimer}>
-                    <RotateCcw size={20} />
-                  </button>
-                </div>
-
-                {!isRunning && !isBreak && (
-                  <div className="time-selectors">
-                    <button className={`time-btn ${defaultTime === 15*60 ? 'active' : ''}`} onClick={() => changeDefaultTime(15)}>15</button>
-                    <button className={`time-btn ${defaultTime === 25*60 ? 'active' : ''}`} onClick={() => changeDefaultTime(25)}>25</button>
-                    <button className={`time-btn ${defaultTime === 45*60 ? 'active' : ''}`} onClick={() => changeDefaultTime(45)}>45</button>
-                    <button className={`time-btn ${defaultTime === 60*60 ? 'active' : ''}`} onClick={() => changeDefaultTime(60)}>60</button>
-                  </div>
-                )}
-
-                <div className="quote-container">
-                   <p>"{currentQuote}"</p>
-                </div>
-
-                <div className="divider" style={{margin: '20px 0', width: '200px', opacity: 0.1}}></div>
-
-                {/* Session Tag Selector */}
                 <div className="tag-selector slide-up">
-                  {tags.map(t => (
-                    <button 
-                      key={t.label} 
-                      className={`tag-btn ${sessionTag === t.label ? 'active' : ''}`}
-                      onClick={() => !isRunning && setSessionTag(t.label)}
-                      style={{ '--tag-color': t.color }}
-                    >
-                      <span className="tag-icon">{t.icon}</span>
-                      <span className="tag-label">{t.label}</span>
-                    </button>
-                  ))}
+                  {tags.map(t => <button key={t.label} className={`tag-btn ${activeTagItem.label === t.label ? 'active' : ''}`} onClick={() => setActiveTagItem(t)}>{t.icon}<span>{t.label}</span></button>)}
                 </div>
-
-                {/* Pomodoro Session Tracker Feature */}
-                {totalPomodoros > 0 && (
-                  <div className="session-dots-container fade-in" style={{ marginTop: '25px' }}>
-                    {[...Array(Math.min(totalPomodoros, 10))].map((_, i) => (
-                       <span key={i} className="session-dot filled" title="Tamamlanan Odak"></span>
-                    ))}
-                  </div>
-                )}
+                <div className="timer-controls slide-up">
+                  <button className="ctrl-btn secondary" onClick={resetTimer} title="Sıfırla"><RotateCcw size={22} /></button>
+                  <button className="ctrl-btn primary" onClick={() => setIsRunning(!isRunning)}>{isRunning ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" style={{ marginLeft: '4px' }} />}</button>
+                  <button className="ctrl-btn secondary" onClick={handleTimerComplete} title="Atla"><Check size={22} /></button>
+                </div>
               </div>
             )}
-
-            {/* TASKS TAB */}
             {activeTab === 'tasks' && (
-              <div className="tasks-tab slide-up">
-                <h2>Yapılacaklar</h2>
-                <div className="input-group">
-                  <div className="task-input-wrapper">
-                    <input 
-                      type="text" 
-                      placeholder="Yeni bir görev ekle..."
-                      value={inputValue}
-                      onChange={(e) => setInputValue(e.target.value)}
-                      onKeyDown={addTask}
-                    />
-                    <div className="priority-select">
-                      {['low', 'medium', 'high'].map(p => (
-                        <button 
-                          key={p}
-                          className={`prio-btn ${inputPriority === p ? 'active' : ''} ${p}`}
-                          onClick={() => setInputPriority(p)}
-                          title={`${p.charAt(0).toUpperCase() + p.slice(1)} Öncelik`}
-                        >
-                          <Flag size={14} />
-                        </button>
-                      ))}
-                    </div>
+              <div className="tasks-tab">
+                <div className="tasks-header slide-up">
+                  <div className="input-glass">
+                    <input type="text" placeholder="Yeni bir görev ekle..." value={inputValue} onChange={(e) => setInputValue(e.target.value)} onKeyDown={addTask} />
+                    <div className="priority-select">{['low', 'medium', 'high'].map(p => <button key={p} className={`prio-btn ${inputPriority === p ? 'active' : ''} ${p}`} onClick={() => setInputPriority(p)} title={`${p.charAt(0).toUpperCase() + p.slice(1)} Öncelik`}><Flag size={14} /></button>)}</div>
                   </div>
                 </div>
                 <div className="task-list">
                   {tasks.map((task, index) => (
-                    <div 
-                      key={task.id} 
-                      className={`task-card ${task.completed ? 'completed' : ''}`} 
-                      onClick={() => toggleTask(task.id)}
-                      style={{ animationDelay: `${index * 0.05}s` }}
-                    >
-                      <button className="check-btn">
-                         {task.completed ? <Check className="check-icon" size={18} /> : <Circle className="uncheck-icon" size={18} />}
-                      </button>
-                      <div className="task-content">
-                        <span className="task-text">{task.text}</span>
-                        <div className="task-meta">
-                          <span className={`prio-badge ${task.priority || 'medium'}`}>
-                            {task.priority === 'high' ? 'Yüksek' : task.priority === 'low' ? 'Düşük' : 'Orta'}
-                          </span>
-                        </div>
-                      </div>
+                    <div key={task.id} className={`task-card ${task.completed ? 'completed' : ''}`} onClick={() => toggleTask(task.id)} style={{ animationDelay: `${index * 0.05}s` }}>
+                      <button className="check-btn">{task.completed ? <Check className="check-icon" size={18} /> : <Circle className="uncheck-icon" size={18} />}</button>
+                      <div className="task-content"><span className="task-text">{task.text}</span><div className="task-meta"><span className={`prio-badge ${task.priority || 'medium'}`}>{task.priority === 'high' ? 'Yüksek' : task.priority === 'low' ? 'Düşük' : 'Orta'}</span></div></div>
                       {task.completed && task.xpClaimed && <span className="xp-floating">+10 XP</span>}
                     </div>
                   ))}
-                  {tasks.length === 0 && (
-                    <div className="empty-state">
-                      <ListTodo size={40} opacity={0.3} />
-                      <p>Tüm görevler tamamlandı, harika iş çıkardın.</p>
-                    </div>
-                  )}
+                  {tasks.length === 0 && <div className="empty-state"><ListTodo size={40} opacity={0.3} /><p>Tüm görevler tamamlandı, harika iş çıkardın.</p></div>}
                 </div>
               </div>
             )}
-
-            {/* STATS TAB */}
             {activeTab === 'stats' && (
               <div className="stats-tab fade-in">
                 <h2>Performans Analizi</h2>
-                
                 <div className="stats-grid">
-                  <div className="stat-card">
-                    <div className="stat-icon-wrapper"><Trophy size={18} /></div>
-                    <h3>Gelişim</h3>
-                    <div className="stat-value highlight">{level}</div>
-                    <p className="stat-desc">Mevcut Seviye</p>
-                  </div>
-                  <div className="stat-card">
-                    <div className="stat-icon-wrapper"><Target size={18} /></div>
-                    <h3>Odak</h3>
-                    <div className="stat-value">{totalPomodoros}</div>
-                    <p className="stat-desc">Oturum</p>
-                  </div>
-                  <div className="stat-card">
-                    <div className="stat-icon-wrapper"><TrendingUp size={18} /></div>
-                    <h3>Başarı</h3>
-                    <div className="stat-value">{tasksCompleted}</div>
-                    <p className="stat-desc">Görev Tamamlandı</p>
-                  </div>
+                  <div className="stat-card"><div className="stat-icon-wrapper"><Trophy size={18} /></div><h3>Gelişim</h3><div className="stat-value highlight">{level}</div><p className="stat-desc">Mevcut Seviye</p></div>
+                  <div className="stat-card"><div className="stat-icon-wrapper"><Target size={18} /></div><h3>Odak</h3><div className="stat-value">{totalPomodoros}</div><p className="stat-desc">Oturum</p></div>
+                  <div className="stat-card"><div className="stat-icon-wrapper"><TrendingUp size={18} /></div><h3>Başarı</h3><div className="stat-value">{tasksCompleted}</div><p className="stat-desc">Görev Tamamlandı</p></div>
                 </div>
-
                 <div className="achievements-section slide-up">
-                  <div className="section-header">
-                    <Trophy size={18} color="var(--accent-cyan)" />
-                    <h3>Başarımlar</h3>
-                  </div>
+                  <div className="section-header"><Trophy size={18} color="var(--accent-cyan)" /><h3>Başarımlar</h3></div>
                   <div className="achievements-grid">
-                    {achievements.map(a => (
-                      <div key={a.id} className={`achievement-card ${a.unlocked ? 'unlocked' : 'locked'}`} title={a.description}>
-                        <div className="a-icon">{a.icon}</div>
-                        <div className="a-info">
-                          <span className="a-title">{a.title}</span>
-                        </div>
-                      </div>
-                    ))}
+                    {achievements.map(a => <div key={a.id} className={`achievement-card ${a.unlocked ? 'unlocked' : 'locked'}`} title={a.description}><div className="a-icon">{a.icon}</div><div className="a-info"><span className="a-title">{a.title}</span></div></div>)}
                   </div>
                 </div>
-
-                {/* Focus Pulse Chart [NEW] */}
                 <div className="analytics-card slide-up">
-                  <div className="analytics-header">
-                    <TrendingUp size={18} color="var(--accent-cyan)" />
-                    <h3>Odak Akışı</h3>
-                  </div>
+                  <div className="analytics-header"><TrendingUp size={18} color="var(--accent-cyan)" /><h3>Odak Akışı</h3></div>
                   <div className="pulse-chart-container">
                     <svg viewBox="0 0 400 100" className="pulse-svg">
-                      <defs>
-                        <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="var(--accent-cyan)" stopOpacity="0.4" />
-                          <stop offset="100%" stopColor="var(--accent-cyan)" stopOpacity="0" />
-                        </linearGradient>
-                      </defs>
-                      <path 
-                        className="pulse-path"
-                        d={`M 0 80 ${focusHistory.map((h, i) => `L ${(i + 1) * 80} ${80 - (h.duration / 60) * 50}`).join(' ')} L 400 80`}
-                        fill="url(#chartGradient)"
-                      />
-                      <path 
-                        className="pulse-line"
-                        d={`M 0 80 ${focusHistory.map((h, i) => `L ${(i + 1) * 80} ${80 - (h.duration / 60) * 50}`).join(' ')}`}
-                        fill="none"
-                        stroke="var(--accent-cyan)"
-                        strokeWidth="2"
-                      />
-                      {focusHistory.map((h, i) => (
-                        <circle 
-                          key={h.id} 
-                          cx={(i + 1) * 80} 
-                          cy={80 - (h.duration / 60) * 50} 
-                          r="3" 
-                          fill="var(--accent-cyan)" 
-                          className="pulse-point"
-                        />
-                      ))}
+                      <defs><linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="var(--accent-cyan)" stopOpacity="0.4" /><stop offset="100%" stopColor="var(--accent-cyan)" stopOpacity="0" /></linearGradient></defs>
+                      <path className="pulse-path" d={`M 0 80 ${focusHistory.map((h, i) => `L ${(i + 1) * 80} ${80 - (h.duration / 60) * 50}`).join(' ')} L 400 80`} fill="url(#chartGradient)" />
+                      <path className="pulse-line" d={`M 0 80 ${focusHistory.map((h, i) => `L ${(i + 1) * 80} ${80 - (h.duration / 60) * 50}`).join(' ')}`} fill="none" stroke="var(--accent-cyan)" strokeWidth="2" />
+                      {focusHistory.map((h, i) => <circle key={h.id} cx={(i + 1) * 80} cy={80 - (h.duration / 60) * 50} r="3" fill="var(--accent-cyan)" className="pulse-point" />)}
                     </svg>
-                    <div className="chart-labels">
-                      <span>Geçmiş Seanslar (Süre Yoğunluğu)</span>
-                    </div>
+                    <div className="chart-labels"><span>Geçmiş Seanslar (Süre Yoğunluğu)</span></div>
                   </div>
                 </div>
-
                 {focusHistory.length > 0 && (
                   <div className="history-section fade-in" style={{ marginTop: '30px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px', paddingLeft: '5px' }}>
-                      <History size={18} color="var(--accent-cyan)" />
-                      <h3 style={{ fontSize: '1rem', fontWeight: 600 }}>Son Aktivite</h3>
-                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px', paddingLeft: '5px' }}><History size={18} color="var(--accent-cyan)" /><h3 style={{ fontSize: '1rem', fontWeight: 600 }}>Son Aktivite</h3></div>
                     <div className="history-list" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                       {focusHistory.map(entry => (
                         <div key={entry.id} className="history-item slide-up">
-                          <div className="h-left">
-                            <div className="h-date-box">
-                              <span className="h-day">{entry.day || '...'}</span>
-                              <span className="h-date">{entry.date || '...'}</span>
-                            </div>
-                            <div className="h-tag">
-                              <span>{tags.find(t => t.label === entry.tag)?.icon}</span>
-                              <span>{entry.tag}</span>
-                            </div>
-                          </div>
-                          <div className="h-right">
-                            <div className="h-meta">
-                              <span className="h-duration">{entry.duration} dk</span>
-                              <span className="h-time">{entry.time}</span>
-                            </div>
-                            {entry.tasksCompleted > 0 && (
-                              <div className="h-badge" title="Tamamlanan Görevler">
-                                <Check size={10} />
-                                <span>{entry.tasksCompleted}</span>
-                              </div>
-                            )}
-                          </div>
+                          <div className="h-left"><div className="h-date-box"><span className="h-day">{entry.day || '...'}</span><span className="h-date">{entry.date || '...'}</span></div><div className="h-tag"><span>{tags.find(t => t.label === entry.tag)?.icon}</span><span>{entry.tag}</span></div></div>
+                          <div className="h-right"><div className="h-meta"><span className="h-duration">{entry.duration} dk</span><span className="h-time">{entry.time}</span></div>{entry.tasksCompleted > 0 && <div className="h-badge" title="Tamamlanan Görevler"><Check size={10} /><span>{entry.tasksCompleted}</span></div>}</div>
                         </div>
                       ))}
                     </div>
@@ -973,106 +542,39 @@ function App() {
                 )}
               </div>
             )}
-
-            {/* SETTINGS TAB [NEW] */}
             {activeTab === 'settings' && (
               <div className="settings-tab slide-up" style={{ maxWidth: '500px', margin: '0 auto', width: '100%' }}>
                 <h2>Uygulama Ayarları</h2>
-                
                 <div className="settings-card">
                   <div className="settings-group">
-                    <div className="settings-header">
-                      <Clock size={18} color="var(--accent-cyan)" />
-                      <span>Süre Ayarları (Dakika)</span>
-                    </div>
+                    <div className="settings-header"><Clock size={18} color="var(--accent-cyan)" /><span>Süre Ayarları (Dakika)</span></div>
                     <div className="settings-inputs">
-                      <div className="input-field">
-                        <label>Odak</label>
-                        <input type="number" value={focusDuration} onChange={(e) => {
-                          const val = parseInt(e.target.value) || 1;
-                          setFocusDuration(val);
-                          if (!isRunning) { setDefaultTime(val * 60); setTimeLeft(val * 60); }
-                        }} />
-                      </div>
-                      <div className="input-field">
-                        <label>Kısa Mola</label>
-                        <input type="number" value={shortBreakDuration} onChange={(e) => setShortBreakDuration(parseInt(e.target.value) || 1)} />
-                      </div>
-                      <div className="input-field">
-                        <label>Uzun Mola</label>
-                        <input type="number" value={longBreakDuration} onChange={(e) => setLongBreakDuration(parseInt(e.target.value) || 1)} />
-                      </div>
+                      <div className="input-field"><label>Odak</label><input type="number" value={focusDuration} onChange={(e) => { const val = parseInt(e.target.value) || 1; setFocusDuration(val); if (!isRunning) { setType('focus'); setTimeLeft(val * 60); } }} /></div>
+                      <div className="input-field"><label>Kısa Mola</label><input type="number" value={shortBreakDuration} onChange={(e) => setShortBreakDuration(parseInt(e.target.value) || 1)} /></div>
+                      <div className="input-field"><label>Uzun Mola</label><input type="number" value={longBreakDuration} onChange={(e) => setLongBreakDuration(parseInt(e.target.value) || 1)} /></div>
                     </div>
                   </div>
-
                   <div className="divider" style={{ margin: '20px 0' }}></div>
-
                   <div className="settings-group">
-                    <div className="settings-header">
-                      <Bell size={18} color="var(--accent-cyan)" />
-                      <span>Otomasyon</span>
-                    </div>
-                    <div className="settings-toggle">
-                      <span>Molayı Otomatik Başlat</span>
-                      <button className={`toggle-pill ${autoStartBreaks ? 'active' : ''}`} onClick={() => setAutoStartBreaks(!autoStartBreaks)}>
-                        {autoStartBreaks ? 'Açık' : 'Kapalı'}
-                      </button>
-                    </div>
-                    <div className="settings-toggle">
-                      <span>Odağı Otomatik Başlat</span>
-                      <button className={`toggle-pill ${autoStartFocus ? 'active' : ''}`} onClick={() => setAutoStartFocus(!autoStartFocus)}>
-                        {autoStartFocus ? 'Açık' : 'Kapalı'}
-                      </button>
-                    </div>
+                    <div className="settings-header"><Bell size={18} color="var(--accent-cyan)" /><span>Otomasyon</span></div>
+                    <div className="settings-toggle"><span>Molayı Otomatik Başlat</span><button className={`toggle-pill ${autoStartBreaks ? 'active' : ''}`} onClick={() => setAutoStartBreaks(!autoStartBreaks)}>{autoStartBreaks ? 'Açık' : 'Kapalı'}</button></div>
+                    <div className="settings-toggle"><span>Odağı Otomatik Başlat</span><button className={`toggle-pill ${autoStartFocus ? 'active' : ''}`} onClick={() => setAutoStartFocus(!autoStartFocus)}>{autoStartFocus ? 'Açık' : 'Kapalı'}</button></div>
                   </div>
-
                   <div className="divider" style={{ margin: '20px 0' }}></div>
-
                   <div className="settings-group">
-                    <div className="settings-header">
-                      <History size={18} color="var(--accent-cyan)" />
-                      <span>Veri Taşınabilirliği</span>
-                    </div>
-                    <div className="data-actions">
-                      <button className="data-btn export" onClick={exportData}>
-                        <Download size={16} />
-                        <span>Verileri Dışa Aktar</span>
-                      </button>
-                      <label className="data-btn import">
-                        <Upload size={16} />
-                        <span>Verileri İçe Aktar</span>
-                        <input type="file" accept=".json" onChange={importData} style={{ display: 'none' }} />
-                      </label>
-                    </div>
-                    <p className="settings-hint">İlerleyişinizi ve ayarlarınızı bir JSON dosyası olarak yedekleyin.</p>
+                    <div className="settings-header"><History size={18} color="var(--accent-cyan)" /><span>Veri Taşınabilirliği</span></div>
+                    <div className="data-actions"><button className="data-btn export" onClick={exportData}><Download size={16} /><span>Verileri Dışa Aktar</span></button><label className="data-btn import"><Upload size={16} /><span>Verileri İçe Aktar</span><input type="file" accept=".json" onChange={importData} style={{ display: 'none' }} /></label></div>
                   </div>
                 </div>
               </div>
             )}
-            {/* ABOUT TAB [NEW] */}
             {activeTab === 'about' && (
               <div className="about-tab slide-up" style={{ maxWidth: '500px', margin: '0 auto', width: '100%', textAlign: 'center' }}>
-                <div className="brand-hero">
-                  <div className="about-icon-wrapper">
-                    <Focus size={48} color="var(--accent-cyan)" />
-                  </div>
-                  <h1>FocusZen</h1>
-                  <p className="version-badge">Version 2.0.0 Pro</p>
-                </div>
-
+                <div className="brand-hero"><div className="about-icon-wrapper"><Focus size={48} color="var(--accent-cyan)" /></div><h1>FocusZen</h1><p className="version-badge">Version 2.0.0 Pro</p></div>
                 <div className="about-card">
-                  <p className="vision-text">
-                    FocusZen, derin odaklanma ve sürdürülebilir üretkenlik için modern bir dijital sığınaktır. 
-                    Nörobilim ve minimalizmden ilham alarak tasarlandı.
-                  </p>
-                  
+                  <p className="vision-text">FocusZen, derin odaklanma ve sürdürülebilir üretkenlik için modern bir dijital sığınaktır. Nörobilim ve minimalizmden ilham alarak tasarlandı.</p>
                   <div className="divider" style={{ margin: '20px 0' }}></div>
-                  
-                  <div className="credits-section">
-                    <h3>Geliştirme</h3>
-                    <p>Designed & Built by <strong>Antigravity AI</strong></p>
-                    <p style={{ fontSize: '0.8rem', opacity: 0.6, marginTop: '5px' }}>© 2026 FocusZen. Tüm hakları saklıdır.</p>
-                  </div>
+                  <div className="credits-section"><h3>Geliştirme</h3><p>Designed & Built by <strong>Antigravity AI</strong></p><p style={{ fontSize: '0.8rem', opacity: 0.6, marginTop: '5px' }}>© 2026 FocusZen. Tüm hakları saklıdır.</p></div>
                 </div>
               </div>
             )}
