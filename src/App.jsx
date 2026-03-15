@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Pause, RotateCcw, Check, Circle, ListTodo, BarChart3, Clock, Music, X, ChevronLeft, ChevronRight, Focus, Cloud, Wind, Zap, Tag, History, Trophy, Target, TrendingUp, Settings as SettingsIcon, Settings2, Bell, Volume2, Flag, ChevronUp, ChevronDown, ListFilter } from 'lucide-react';
+import { Play, Pause, RotateCcw, Check, Circle, ListTodo, BarChart3, Clock, Music, X, ChevronLeft, ChevronRight, Focus, Cloud, Wind, Zap, Tag, History, Trophy, Target, TrendingUp, Settings as SettingsIcon, Settings2, Bell, Volume2, Flag, ChevronUp, ChevronDown, ListFilter, CloudRain, Trees } from 'lucide-react';
 import { Howl } from 'howler';
 import './index.css';
 
@@ -101,6 +101,7 @@ function App() {
 
   // Background Noise State (White Noise Synth)
   const [noisePlaying, setNoisePlaying] = useState(false);
+  const [noiseType, setNoiseType] = useState('white'); // white, rain, forest
   const [noiseVolume, setNoiseVolume] = useState(0.2);
   const noiseNodeRef = useRef(null);
 
@@ -183,38 +184,64 @@ function App() {
     }
   };
 
-  const toggleNoise = () => {
-    if (!noisePlaying) {
-      if (!audioCtxRef.current) audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
-      const ctx = audioCtxRef.current;
-      
-      const bufferSize = 2 * ctx.sampleRate;
-      const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-      const output = noiseBuffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) {
-        output[i] = Math.random() * 2 - 1;
-      }
-
-      const whiteNoise = ctx.createBufferSource();
-      whiteNoise.buffer = noiseBuffer;
-      whiteNoise.loop = true;
-
-      const gainNode = ctx.createGain();
-      gainNode.gain.setValueAtTime(noiseVolume, ctx.currentTime);
-      
-      whiteNoise.connect(gainNode);
-      gainNode.connect(ctx.destination);
-      
-      whiteNoise.start();
-      noiseNodeRef.current = { source: whiteNoise, gain: gainNode };
-      setNoisePlaying(true);
-    } else {
+  const toggleNoise = (type = 'white') => {
+    // If clicking same type while playing, stop it
+    if (noisePlaying && noiseType === type) {
       if (noiseNodeRef.current) {
         noiseNodeRef.current.source.stop();
         noiseNodeRef.current = null;
       }
       setNoisePlaying(false);
+      return;
     }
+
+    // If already playing another type, stop first
+    if (noisePlaying) {
+      if (noiseNodeRef.current) {
+        noiseNodeRef.current.source.stop();
+      }
+    }
+
+    if (!audioCtxRef.current) audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
+    const ctx = audioCtxRef.current;
+    
+    const bufferSize = 2 * ctx.sampleRate;
+    const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const output = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      output[i] = Math.random() * 2 - 1;
+    }
+
+    const source = ctx.createBufferSource();
+    source.buffer = noiseBuffer;
+    source.loop = true;
+
+    const gainNode = ctx.createGain();
+    const filter = ctx.createBiquadFilter();
+
+    if (type === 'rain') {
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(400, ctx.currentTime);
+      gainNode.gain.setValueAtTime(noiseVolume * 1.5, ctx.currentTime);
+    } else if (type === 'forest') {
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(800, ctx.currentTime);
+      filter.Q.setValueAtTime(0.5, ctx.currentTime);
+      gainNode.gain.setValueAtTime(noiseVolume * 0.8, ctx.currentTime);
+    } else {
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(1000, ctx.currentTime);
+      gainNode.gain.setValueAtTime(noiseVolume, ctx.currentTime);
+    }
+
+    source.connect(filter);
+    filter.connect(gainNode);
+    gainNode.connect(ctx.destination);
+    
+    source.start();
+    noiseNodeRef.current = { source, gain: gainNode, filter };
+    setNoiseType(type);
+    setNoisePlaying(true);
   };
 
   const changeNoiseVolume = (e) => {
@@ -480,14 +507,22 @@ function App() {
 
                 <div className="divider"></div>
 
-                <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
-                  <div style={{display: 'flex', alignItems: 'center', gap: '8px', color: noisePlaying ? 'var(--accent-cyan)' : 'var(--text-muted)'}}>
-                    <Wind size={14} />
-                    <span style={{fontSize: '0.75rem'}}>Derin Odak (Gürültü)</span>
+                <div className="noise-selector-group">
+                  <div className="noise-header">
+                    <Volume2 size={14} />
+                    <span>Ambiyans (Gürültü)</span>
                   </div>
-                  <button className={`toggle-pill ${noisePlaying ? 'active' : ''}`} onClick={toggleNoise}>
-                    {noisePlaying ? 'Açık' : 'Kapalı'}
-                  </button>
+                  <div className="noise-options">
+                    <button className={`noise-opt-btn ${noisePlaying && noiseType === 'white' ? 'active' : ''}`} onClick={() => toggleNoise('white')} title="Beyaz Gürültü">
+                      <Wind size={14} />
+                    </button>
+                    <button className={`noise-opt-btn ${noisePlaying && noiseType === 'rain' ? 'active' : ''}`} onClick={() => toggleNoise('rain')} title="Yağmur">
+                      <CloudRain size={14} />
+                    </button>
+                    <button className={`noise-opt-btn ${noisePlaying && noiseType === 'forest' ? 'active' : ''}`} onClick={() => toggleNoise('forest')} title="Orman">
+                      <Trees size={14} />
+                    </button>
+                  </div>
                 </div>
 
                 {noisePlaying && (

@@ -358,12 +358,19 @@ body {
 .volume-slider { width: 100%; cursor: pointer; accent-color: var(--accent-cyan); height: 4px; border-radius: 2px; }
 
 .divider { height: 1px; background: var(--glass-border); margin: 5px 0; width: 100%; opacity: 0.5; }
-.toggle-pill { 
-  background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); 
-  color: var(--text-muted); font-size: 0.65rem; padding: 4px 10px; border-radius: 20px; 
-  cursor: pointer; transition: all 0.2s; font-weight: 600;
+.noise-selector-group { display: flex; flex-direction: column; gap: 8px; }
+.noise-header { display: flex; align-items: center; gap: 8px; font-size: 0.75rem; color: var(--text-muted); font-weight: 500; }
+.noise-options { display: flex; gap: 8px; justify-content: center; }
+.noise-opt-btn {
+  background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border);
+  color: var(--text-muted); padding: 8px; border-radius: 8px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; transition: all 0.2s;
 }
-.toggle-pill.active { background: var(--accent-cyan); color: var(--bg-core); border-color: var(--accent-cyan); box-shadow: 0 0 10px var(--accent-cyan-dim); }
+.noise-opt-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+.noise-opt-btn.active { 
+  background: var(--accent-cyan); color: var(--bg-core); 
+  border-color: var(--accent-cyan); box-shadow: 0 4px 15px var(--accent-cyan-dim);
+}
 
 /* Pomodoro Session Dots Feature */
 .session-dots-container { display: flex; gap: 8px; justify-content: center; margin-top: 15px; }
