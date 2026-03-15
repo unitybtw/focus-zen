@@ -310,12 +310,18 @@ function App() {
   const handleSessionEnd = () => {
     playAlarmSound();
 
-    // Trigger Native Notification
+    // Trigger Native Notification 2.0 [NEW]
     if ("Notification" in window && Notification.permission === "granted") {
+      const summary = !isBreak 
+        ? `🔥 Seans Bitti! Toplam: ${totalPomodoros + 1} seans. Seviye: ${level}`
+        : `⚡ Mola Bitti! Odaklanma vakti.`;
+      
       new Notification("FocusZen", {
-        body: isBreak ? "Mola sona erdi, yeniden odaklanma vakti!" : "Odak süren bitti, harika çalıştın. Biraz dinlen.",
-        icon: "/icon.png",
-        silent: true
+        body: summary,
+        icon: "/icon.png", // In a real app, this would be the generated asset
+        badge: "/icon.png",
+        silent: false,
+        tag: "focus-zen-alert"
       });
     }
 
