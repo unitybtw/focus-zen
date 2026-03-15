@@ -186,14 +186,24 @@ body {
 .visualizer.playing span { background: var(--accent-cyan); animation: equalize 1s infinite alternate; }
 .visualizer.playing span:nth-child(4) { animation-delay: 0.4s; }
 
-/* Micro-interaction for Nav Buttons */
+/* Elite Spring Micro-interactions */
+.nav-btn, .timer-btn, .task-item, .stat-card, .achievement-card, .data-btn, .theme-bubble, .zen-toggle-btn {
+  transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.nav-btn:hover, .stat-card:hover, .achievement-card:hover, .data-btn:hover {
+  transform: translateY(-4px) scale(1.02);
+}
+
+.nav-btn:active, .timer-btn:active {
+  transform: scale(0.95);
+}
+
 .nav-btn::after {
   content: ''; position: absolute; width: 100%; height: 100%;
   background: var(--accent-cyan); border-radius: inherit;
-  opacity: 0; transform: scale(0.5); transition: 0.3s; z-index: -1;
+  opacity: 0; transform: scale(0.5); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: -1;
 }
-.nav-btn:hover::after { opacity: 0.1; transform: scale(1.1); }
-.nav-btn.active::after { opacity: 0.2; transform: scale(1); }
 
 @keyframes equalize { 0% { height: 2px; } 100% { height: 12px; } }
 
