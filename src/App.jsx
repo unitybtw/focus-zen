@@ -7,22 +7,44 @@ import { Howl } from 'howler';
 import './index.css';
 
 function App() {
-  // Navigation
-  const [activeTab, setActiveTab] = useState('timer'); // timer, tasks, stats
-
-  // Gamification System
+  // 1. ALL STATES & HOOKS (TOP LEVEL)
+  const [activeTab, setActiveTab] = useState('timer');
   const [xp, setXp] = useState(() => parseInt(localStorage.getItem('xp')) || 0);
   const [level, setLevel] = useState(() => parseInt(localStorage.getItem('level')) || 1);
-  const [dailyGoal] = useState(8); // 8 Pomodoros per day
   const [totalPomodoros, setTotalPomodoros] = useState(() => parseInt(localStorage.getItem('totalPomodoros')) || 0);
   const [tasksCompleted, setTasksCompleted] = useState(() => parseInt(localStorage.getItem('tasksCompleted')) || 0);
+  const [isZen, setIsZen] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(25 * 60);
+  const [isRunning, setIsRunning] = useState(false);
+  const [type, setType] = useState('focus');
+  const [defaultTime, setDefaultTime] = useState(25 * 60);
+  const [focusDuration, setFocusDuration] = useState(() => parseInt(localStorage.getItem('focusDuration')) || 25);
+  const [shortBreakDuration, setShortBreakDuration] = useState(() => parseInt(localStorage.getItem('shortBreakDuration')) || 5);
+  const [longBreakDuration, setLongBreakDuration] = useState(() => parseInt(localStorage.getItem('longBreakDuration')) || 15);
+  const [autoStartBreaks, setAutoStartBreaks] = useState(() => localStorage.getItem('autoStartBreaks') === 'true');
+  const [autoStartFocus, setAutoStartFocus] = useState(() => localStorage.getItem('autoStartFocus') === 'true');
+  const [trayOpen, setTrayOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [ambientPlaying, setAmbientPlaying] = useState(false);
+  const [selectedAmbient, setSelectedAmbient] = useState('lofi');
+  const [volume, setVolume] = useState(0.5);
+  const [inputValue, setInputValue] = useState('');
+  const [inputPriority, setInputPriority] = useState('medium');
+  const [currentQuote, setCurrentQuote] = useState("");
 
-  // Elite Achievements System [NEW]
+  const [lang, setLang] = useState(() => {
+    try {
+      const saved = localStorage.getItem('lang');
+      if (saved === 'tr' || saved === 'en') return saved;
+    } catch (e) { /* fallback to default lang */ }
+    return 'tr';
+  });
+
   const [achievements, setAchievements] = useState(() => {
     try {
       const saved = localStorage.getItem('achievements');
       if (saved) return JSON.parse(saved);
-    } catch (e) { console.error("Achievement parsing error", e); }
+    } catch (e) { /* fallback to default achievements */ }
     return [
       { id: 'early_riser', title: 'Erken Kalkan', description: 'Günün ilk seansını tamamla', icon: '🌅', unlocked: false },
       { id: 'deep_focus', title: 'Derin Odak', description: '4 seans üst üste tamamla', icon: '🧠', unlocked: false },
@@ -31,23 +53,6 @@ function App() {
     ];
   });
 
-  // Zen Mode State [NEW]
-  const [isZen, setIsZen] = useState(false);
-
-  // Timer States
-  const [timeLeft, setTimeLeft] = useState(25 * 60);
-  const [isRunning, setIsRunning] = useState(false);
-  const [type, setType] = useState('focus'); // focus, short, long
-  const [defaultTime, setDefaultTime] = useState(25 * 60);
-
-  // Settings & Automation [NEW]
-  const [focusDuration, setFocusDuration] = useState(() => parseInt(localStorage.getItem('focusDuration')) || 25);
-  const [shortBreakDuration, setShortBreakDuration] = useState(() => parseInt(localStorage.getItem('shortBreakDuration')) || 5);
-  const [longBreakDuration, setLongBreakDuration] = useState(() => parseInt(localStorage.getItem('longBreakDuration')) || 15);
-  const [autoStartBreaks, setAutoStartBreaks] = useState(() => localStorage.getItem('autoStartBreaks') === 'true');
-  const [autoStartFocus, setAutoStartFocus] = useState(() => localStorage.getItem('autoStartFocus') === 'true');
-
-  // New History & Analytics [NEW]
   const [focusHistory, setFocusHistory] = useState(() => {
     try {
       const saved = localStorage.getItem('focusHistory');
@@ -55,23 +60,20 @@ function App() {
     } catch (e) { return []; }
   });
 
-  // Tasks System
   const [tasks, setTasks] = useState(() => {
     try {
       const saved = localStorage.getItem('tasks');
       return saved ? JSON.parse(saved) : [];
     } catch (e) { return []; }
   });
-  const [inputValue, setInputValue] = useState('');
-  const [inputPriority, setInputPriority] = useState('medium');
 
-  // Multi-Language Support [NEW]
-  const [lang, setLang] = useState(() => {
-    const saved = localStorage.getItem('lang');
-    if (saved === 'tr' || saved === 'en') return saved;
-    return 'tr';
-  });
-  
+  const [activeTagItem, setActiveTagItem] = useState({ label: 'İş', color: '#3b82f6', icon: <Zap size={10} /> });
+
+  // Refs
+  const lofiRef = useRef(null);
+  const soundRefs = useRef({});
+
+  // 2. CONSTANTS & POOLS
   const translations = {
     tr: {
       timer: 'Zaman', tasks: 'İşler', stats: 'Performans', settings: 'Ayarlar', about: 'Hakkında',
@@ -101,60 +103,26 @@ function App() {
 
   const t = translations[lang] || translations.tr;
 
-  // Quote Engine 2.0 [NEW]
   const quotes = {
     tr: {
-      focus: [
-        "Sessizlikte derin odak yatar.",
-        "Sadece şu ana odaklan.",
-        "Zihin sakinliği, gücün anahtarıdır.",
-        "Bir seferde tek bir adım.",
-        "Disiplin özgürlüktür."
-      ],
-      break: [
-        "Zihnini dinlendir, ruhun canlansın.",
-        "Derin bir nefes al.",
-        "Mola, yolculuğun bir parçasıdır.",
-        "Sakinlikte güç vardır.",
-        "Yavaşla ve anın tadını çıkar."
-      ]
+      focus: ["Sessizlikte derin odak yatar.", "Sadece şu ana odaklan.", "Zihin sakinliği, gücün anahtarıdır.", "Bir seferde tek bir adım.", "Disiplin özgürlüktür."],
+      break: ["Zihnini dinlendir, ruhun canlansın.", "Derin bir nefes al.", "Mola, yolculuğun bir parçasıdır.", "Sakinlikte güç vardır.", "Yavaşla ve anın tadını çıkar."]
     },
     en: {
-      focus: [
-        "Deep focus lies in silence.",
-        "Focus only on the now.",
-        "Calm mind is the key to power.",
-        "One step at a time.",
-        "Discipline is freedom."
-      ],
-      break: [
-        "Rest your mind, let your soul revive.",
-        "Take a deep breath.",
-        "Break is a part of the journey.",
-        "There is strength in stillness.",
-        "Slow down and enjoy the moment."
-      ]
+      focus: ["Deep focus lies in silence.", "Focus only on the now.", "Calm mind is the key to power.", "One step at a time.", "Discipline is freedom."],
+      break: ["Rest your mind, let your soul revive.", "Take a deep breath.", "Break is a part of the journey.", "There is strength in stillness.", "Slow down and enjoy the moment."]
     }
   };
 
-  const [currentQuote, setCurrentQuote] = useState("");
-  
-  useEffect(() => {
-    const langPool = quotes[lang] || quotes.tr;
-    const pool = langPool[type === 'focus' ? 'focus' : 'break'] || langPool.focus;
-    setCurrentQuote(pool[Math.floor(Math.random() * pool.length)]);
-  }, [type, lang]);
+  const tags = [
+    { label: 'İş', color: '#3b82f6', icon: <Zap size={10} /> },
+    { label: 'Eğitim', color: '#8b5cf6', icon: <Cloud size={10} /> },
+    { label: 'Kişisel', color: '#10b981', icon: <Wind size={10} /> }
+  ];
 
-  // System Tray Simulation [NEW]
-  const [trayOpen, setTrayOpen] = useState(false);
+  const dailyGoal = 8;
 
-  useEffect(() => {
-    localStorage.setItem('lang', lang);
-  }, [lang]);
-
-  // UX Notifications [NEW]
-  const [notifications, setNotifications] = useState([]);
-
+  // 3. UTILITIES & CALLBACKS
   const addNotification = useCallback((message, type = 'success') => {
     const id = Date.now();
     setNotifications(prev => [...prev, { id, message, type }]);
@@ -163,45 +131,38 @@ function App() {
     }, 3000);
   }, []);
 
-  // Ambient Sounds System
-  const [ambientPlaying, setAmbientPlaying] = useState(false);
-  const [selectedAmbient, setSelectedAmbient] = useState('lofi'); // lofi, white, rain, forest
-  const [volume, setVolume] = useState(0.5);
-  
-  const lofiRef = useRef(null);
-  const soundRefs = useRef({});
-
-  // UTILITIES
   const playSfx = useCallback((sfxType) => {
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    if (sfxType === 'complete') {
-      const oscillator = audioCtx.createOscillator();
-      const gainNode = audioCtx.createGain();
-      oscillator.connect(gainNode);
-      gainNode.connect(audioCtx.destination);
-      oscillator.type = 'sine';
-      oscillator.frequency.setValueAtTime(440, audioCtx.currentTime);
-      if (oscillator.frequency.exponentialRampToValueAtTime) {
-        oscillator.frequency.exponentialRampToValueAtTime(110, audioCtx.currentTime + 1.5);
+    try {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (sfxType === 'complete') {
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(440, audioCtx.currentTime);
+        if (oscillator.frequency.exponentialRampToValueAtTime) {
+          oscillator.frequency.exponentialRampToValueAtTime(110, audioCtx.currentTime + 1.5);
+        }
+        gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.5);
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 1.5);
+      } else if (sfxType === 'levelup') {
+         [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+           const osc = audioCtx.createOscillator();
+           const g = audioCtx.createGain();
+           osc.connect(g);
+           g.connect(audioCtx.destination);
+           osc.type = 'triangle';
+           osc.frequency.setValueAtTime(freq, audioCtx.currentTime + i * 0.1);
+           g.gain.setValueAtTime(0.3, audioCtx.currentTime + i * 0.1);
+           g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + i * 0.1 + 0.3);
+           osc.start(audioCtx.currentTime + i * 0.1);
+           osc.stop(audioCtx.currentTime + i * 0.1 + 0.3);
+         });
       }
-      gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.5);
-      oscillator.start();
-      oscillator.stop(audioCtx.currentTime + 1.5);
-    } else if (sfxType === 'levelup') {
-       [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
-         const osc = audioCtx.createOscillator();
-         const g = audioCtx.createGain();
-         osc.connect(g);
-         g.connect(audioCtx.destination);
-         osc.type = 'triangle';
-         osc.frequency.setValueAtTime(freq, audioCtx.currentTime + i * 0.1);
-         g.gain.setValueAtTime(0.3, audioCtx.currentTime + i * 0.1);
-         g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + i * 0.1 + 0.3);
-         osc.start(audioCtx.currentTime + i * 0.1);
-         osc.stop(audioCtx.currentTime + i * 0.1 + 0.3);
-       });
-    }
+    } catch (e) { console.error("SFX Error", e); }
   }, []);
 
   const unlockAchievement = useCallback((id) => {
@@ -210,15 +171,17 @@ function App() {
     ));
   }, []);
 
-  // TAGS
-  const tags = [
-    { label: 'İş', color: '#3b82f6', icon: <Zap size={10} /> },
-    { label: 'Eğitim', color: '#8b5cf6', icon: <Cloud size={10} /> },
-    { label: 'Kişisel', color: '#10b981', icon: <Wind size={10} /> }
-  ];
-  const [activeTagItem, setActiveTagItem] = useState(tags[0]);
+  // 4. EFFECTS
+  useEffect(() => {
+    const langPool = quotes[lang] || quotes.tr;
+    const pool = langPool[type === 'focus' ? 'focus' : 'break'] || langPool.focus;
+    if (pool) setCurrentQuote(pool[Math.floor(Math.random() * pool.length)]);
+  }, [type, lang]);
 
-  // EFFECTS
+  useEffect(() => {
+    localStorage.setItem('lang', lang);
+  }, [lang]);
+
   useEffect(() => {
     localStorage.setItem('achievements', JSON.stringify(achievements));
   }, [achievements]);
@@ -243,9 +206,8 @@ function App() {
       setLevel(l => l + 1);
       playSfx('levelup');
     }
-    localStorage.setItem('xp', xp);
-    localStorage.setItem('level', level);
-  }, [xp, level]);
+  }, [xp, level, playSfx]);
+
 
   // TIMER CYCLE
   const handleTimerComplete = useCallback(() => {
@@ -320,47 +282,62 @@ function App() {
 
   // SOUND INITIALIZATION
   useEffect(() => {
-    lofiRef.current = new Howl({
-      src: ['https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'],
-      loop: true,
-      volume: volume,
-      html5: true
-    });
+    try {
+      lofiRef.current = new Howl({
+        src: ['https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'],
+        loop: true,
+        volume: volume,
+        html5: true,
+        onloaderror: (id, err) => console.warn("Lofi Load Error:", err),
+        onplayerror: (id, err) => console.warn("Lofi Play Error:", err)
+      });
 
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const createNoise = (color) => {
-      const bufferSize = 2 * audioCtx.sampleRate;
-      const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-      const output = noiseBuffer.getChannelData(0);
-      let lastOut = 0;
-      for (let i = 0; i < bufferSize; i++) {
-        const white = Math.random() * 2 - 1;
-        if (color === 'white') output[i] = white;
-        else if (color === 'pink') {
-          output[i] = (lastOut + (0.02 * white)) / 1.02;
-          lastOut = output[i];
-          output[i] *= 3.5;
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const createNoise = (color) => {
+        try {
+          const bufferSize = 2 * audioCtx.sampleRate;
+          const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+          const output = noiseBuffer.getChannelData(0);
+          let lastOut = 0;
+          for (let i = 0; i < bufferSize; i++) {
+            const white = Math.random() * 2 - 1;
+            if (color === 'white') output[i] = white;
+            else if (color === 'pink') {
+              output[i] = (lastOut + (0.02 * white)) / 1.02;
+              lastOut = output[i];
+              output[i] *= 3.5;
+            }
+          }
+          const source = audioCtx.createBufferSource();
+          source.buffer = noiseBuffer;
+          source.loop = true;
+          const gainNode = audioCtx.createGain();
+          gainNode.gain.value = 0;
+          source.connect(gainNode);
+          gainNode.connect(audioCtx.destination);
+          return { source, gain: gainNode };
+        } catch (e) {
+          console.error("Noise Creation Error:", e);
+          return null;
         }
-      }
-      const source = audioCtx.createBufferSource();
-      source.buffer = noiseBuffer;
-      source.loop = true;
-      const gainNode = audioCtx.createGain();
-      gainNode.gain.value = 0;
-      source.connect(gainNode);
-      gainNode.connect(audioCtx.destination);
-      return { source, gain: gainNode };
-    };
+      };
 
-    soundRefs.current = {
-      white: createNoise('white'),
-      rain: createNoise('pink'),
-      forest: createNoise('pink'),
-    };
+      soundRefs.current = {
+        white: createNoise('white'),
+        rain: createNoise('pink'),
+        forest: createNoise('pink'),
+      };
+    } catch (e) { 
+      console.error("Audio Global Init Error:", e); 
+    }
 
     return () => {
-      if (lofiRef.current) lofiRef.current.stop();
-      Object.values(soundRefs.current).forEach(s => s.source.stop());
+      try {
+        if (lofiRef.current) lofiRef.current.stop();
+        Object.values(soundRefs.current).forEach(s => {
+          if (s && s.source) s.source.stop();
+        });
+      } catch (e) { /* cleanup errors are non-critical */ }
     };
   }, []);
 
