@@ -16,6 +16,24 @@ function App() {
   const [dailyGoal] = useState(4);
   const xpPerLevel = level * 100;
 
+  // Achievement System [NEW]
+  const [achievements, setAchievements] = useState([
+    { id: 'early_riser', title: 'Erken Kalkan', icon: '🌅', description: '09:00\'dan önce bir seans tamamla.', unlocked: false },
+    { id: 'deep_focus', title: 'Derin Odak', icon: '🧘', description: 'Kesintisiz 4 pomodoro tamamla.', unlocked: false },
+    { id: 'task_master', title: 'Görev Ustası', icon: '🏆', description: 'Toplam 50 görev tamamla.', unlocked: false },
+    { id: 'zen_elite', title: 'Zen Elite', icon: '💎', description: '10. seviyeye ulaş.', unlocked: false }
+  ]);
+
+  const unlockAchievement = (id) => {
+    setAchievements(prev => prev.map(a => {
+      if (a.id === id && !a.unlocked) {
+        // Trigger a notification or sound here if desired
+        return { ...a, unlocked: true };
+      }
+      return a;
+    }));
+  };
+
   // Timer Settings State
   const [focusDuration, setFocusDuration] = useState(25);
   const [shortBreakDuration, setShortBreakDuration] = useState(5);
@@ -96,6 +114,7 @@ function App() {
       if (data.autoStartBreaks) setAutoStartBreaks(data.autoStartBreaks);
       if (data.autoStartFocus) setAutoStartFocus(data.autoStartFocus);
       if (data.sessionCount) setSessionCount(data.sessionCount);
+      if (data.achievements) setAchievements(data.achievements);
     }
   }, []);
 
@@ -104,11 +123,11 @@ function App() {
     const data = { 
       level, xp, totalPomodoros, tasksCompleted, focusHistory, theme,
       focusDuration, shortBreakDuration, longBreakDuration, 
-      autoStartBreaks, autoStartFocus, sessionCount
+      autoStartBreaks, autoStartFocus, sessionCount, achievements
     };
     localStorage.setItem('focusZen_progress', JSON.stringify(data));
     document.documentElement.setAttribute('data-theme', theme);
-  }, [level, xp, totalPomodoros, tasksCompleted, focusHistory, theme, focusDuration, shortBreakDuration, longBreakDuration, autoStartBreaks, autoStartFocus, sessionCount]);
+  }, [level, xp, totalPomodoros, tasksCompleted, focusHistory, theme, focusDuration, shortBreakDuration, longBreakDuration, autoStartBreaks, autoStartFocus, sessionCount, achievements]);
 
   /**
    * Ambient Noise Engine (Web Audio API)
@@ -376,6 +395,7 @@ function App() {
       setDefaultTime(nextDuration * 60);
       
       if (autoStartBreaks) setIsRunning(true);
+      checkAchievements();
     } else {
       setIsBreak(false);
       setTimeLeft(focusDuration * 60);
@@ -421,6 +441,21 @@ function App() {
     gainNode.connect(ctx.destination);
     osc.start();
     osc.stop(ctx.currentTime + 0.8);
+  };
+
+  const checkAchievements = () => {
+    // 1. Early Riser: Before 9:00 AM
+    const hour = new Date().getHours();
+    if (hour < 9) unlockAchievement('early_riser');
+
+    // 2. Deep Focus: 4 Pomodoros in a row
+    if (sessionCount >= 4) unlockAchievement('deep_focus');
+
+    // 3. Task Master: 50 Tasks
+    if (tasksCompleted >= 50) unlockAchievement('task_master');
+
+    // 4. Zen Elite: Level 10
+    if (level >= 10) unlockAchievement('zen_elite');
   };
 
   // Timer controls
@@ -807,6 +842,23 @@ function App() {
                     <h3>Başarı</h3>
                     <div className="stat-value">{tasksCompleted}</div>
                     <p className="stat-desc">Görev Tamamlandı</p>
+                  </div>
+                </div>
+
+                <div className="achievements-section slide-up">
+                  <div className="section-header">
+                    <Trophy size={18} color="var(--accent-cyan)" />
+                    <h3>Başarımlar</h3>
+                  </div>
+                  <div className="achievements-grid">
+                    {achievements.map(a => (
+                      <div key={a.id} className={`achievement-card ${a.unlocked ? 'unlocked' : 'locked'}`} title={a.description}>
+                        <div className="a-icon">{a.icon}</div>
+                        <div className="a-info">
+                          <span className="a-title">{a.title}</span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
 

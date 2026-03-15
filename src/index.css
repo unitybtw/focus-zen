@@ -701,3 +701,35 @@ body {
   font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;
   color: var(--text-muted); margin-bottom: 10px;
 }
+
+/* Achievements Elite System */
+.achievements-section {
+  margin-top: 30px;
+}
+
+.achievements-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 15px;
+}
+
+.achievement-card {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 15px 10px; border-radius: 16px; background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--glass-border); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: center;
+}
+
+.achievement-card.locked { opacity: 0.3; filter: grayscale(1); }
+.achievement-card.unlocked { 
+  opacity: 1; filter: grayscale(0); background: rgba(0, 242, 255, 0.05); 
+  border-color: var(--accent-cyan); box-shadow: 0 0 15px rgba(0, 242, 255, 0.1);
+}
+
+.achievement-card:hover { transform: translateY(-5px); border-color: var(--accent-cyan); }
+
+.a-icon { font-size: 1.5rem; margin-bottom: 8px; }
+.a-title { font-size: 0.7rem; font-weight: 700; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.5px; }
+
+.section-header {
+  display: flex; align-items: center; gap: 10px; padding-left: 5px; margin-bottom: 10px;
+}
+.section-header h3 { font-size: 0.9rem; font-weight: 600; opacity: 0.9; }
