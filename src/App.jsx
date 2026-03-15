@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Pause, RotateCcw, CheckCircle2, Circle, ListTodo, BarChart3, TerminalSquare, Music, Volume2, X } from 'lucide-react';
+import { Play, Pause, RotateCcw, Check, Circle, ListTodo, BarChart3, Clock, Music, X } from 'lucide-react';
+import { Howl } from 'howler';
 import './index.css';
 
 function App() {
@@ -28,34 +29,47 @@ function App() {
   const defaultTime = 25 * 60;
   const breakTime = 5 * 60;
   const [timeLeft, setTimeLeft] = useState(defaultTime);
-  const [isRunning, setIsRunning] = useState(false);
-  const [isBreak, setIsBreak] = useState(false);
-  
   const [ambientPlaying, setAmbientPlaying] = useState(false);
-  const audioRef = useRef(null); // Reference for the actual audio player
+  const audioRef = useRef(null); // Reference for Howler instance
+
+  useEffect(() => {
+    // Initialize Howler with local lofi track downloaded to public folder
+    audioRef.current = new Howl({
+      src: ['/lofi.mp3'],
+      loop: true,
+      volume: 0.4,
+      html5: true // Force HTML5 Audio so it streams properly without filling RAM
+    });
+
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.unload();
+      }
+    };
+  }, []);
 
   const toggleLofi = () => {
     if (!ambientPlaying) {
-      if (!audioRef.current) {
-        // stream.laut.fm is a reliable public radio streaming service
-        audioRef.current = new Audio('https://stream.laut.fm/lofi');
-        audioRef.current.volume = 0.5;
-        audioRef.current.crossOrigin = "anonymous";
-      }
-      audioRef.current.play().catch(err => console.error("Audio playback error:", err));
+      audioRef.current.play();
       setAmbientPlaying(true);
     } else {
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
+      audioRef.current.pause();
       setAmbientPlaying(false);
     }
   };
 
+  // Quotes Array for a more organic feel
+  const quotes = [
+    "İşlenmemiş elmas sadece bir taştır.",
+    "Büyük işler başarmak için, sadece harekete geçmek yetmez.",
+    "Zor yollar, çoğu zaman en güzel yerlere çıkar."
+  ];
+  const [currentQuote] = useState(quotes[Math.floor(Math.random() * quotes.length)]);
+
   // Tasks State
   const [tasks, setTasks] = useState([
-    { id: 1, text: "Günün en önemli görevini tamamla", completed: false, xpClaimed: false },
-    { id: 2, text: "React uygulamasını optimize et", completed: false, xpClaimed: false }
+    { id: 1, text: "Günün öncelikli görevini belirle", completed: false, xpClaimed: false },
+    { id: 2, text: "FocusZen uygulamasını incele", completed: false, xpClaimed: false }
   ]);
   const [inputValue, setInputValue] = useState("");
 
@@ -196,17 +210,19 @@ function App() {
           
           <div className="nav-items">
             <button className={`nav-btn ${activeTab === 'timer' ? 'active' : ''}`} onClick={() => setActiveTab('timer')}>
-              <TerminalSquare size={20} />
-              <span>Odak</span>
+              <Clock size={20} />
+              <span>Zaman</span>
             </button>
             <button className={`nav-btn ${activeTab === 'tasks' ? 'active' : ''}`} onClick={() => setActiveTab('tasks')}>
               <ListTodo size={20} />
-              <span>Görevler</span>
-              <div className="task-badge">{tasks.filter(t => !t.completed).length}</div>
+              <span>İşler</span>
+              {tasks.filter(t => !t.completed).length > 0 && 
+                <div className="task-badge">{tasks.filter(t => !t.completed).length}</div>
+              }
             </button>
             <button className={`nav-btn ${activeTab === 'stats' ? 'active' : ''}`} onClick={() => setActiveTab('stats')}>
               <BarChart3 size={20} />
-              <span>İstatistikler</span>
+              <span>İstatistik</span>
             </button>
           </div>
 
@@ -237,14 +253,13 @@ function App() {
             {/* TIMER TAB */}
             {activeTab === 'timer' && (
               <div className="timer-tab">
-                <div className="status-label">
-                  <span className={`status-dot ${isBreak ? 'break' : 'focus'}`}></span>
-                  {isBreak ? 'Sistem Molası Aktif' : 'Derin Odaklanma Modu'}
-                </div>
                 
                 <div className="timer-circle">
                   <div className="timer-text">{formatTime(timeLeft)}</div>
-                  {/* Cyberpunk rotating ring */}
+                  <div className="status-label">
+                    <span className={`status-dot ${isBreak ? 'break' : 'focus'}`}></span>
+                    {isBreak ? 'Mola Vakti' : 'Focus Modu'}
+                  </div>
                   <div className={`timer-ring ${isRunning ? 'spin' : ''}`}></div>
                 </div>
 
@@ -256,17 +271,21 @@ function App() {
                     <RotateCcw size={20} />
                   </button>
                 </div>
+
+                <div className="quote-container">
+                   <p>"{currentQuote}"</p>
+                </div>
               </div>
             )}
 
             {/* TASKS TAB */}
             {activeTab === 'tasks' && (
               <div className="tasks-tab slide-up">
-                <h2>Hedef Protokolü</h2>
+                <h2>Yapılacaklar</h2>
                 <div className="input-group">
                   <input 
                     type="text" 
-                    placeholder="Görev tanımlayın ve izleyin (Enter↵)"
+                    placeholder="Yeni bir görev ekle ve Enter'a bas..."
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={addTask}
@@ -276,7 +295,7 @@ function App() {
                   {tasks.map(task => (
                     <div key={task.id} className={`task-card ${task.completed ? 'completed' : ''}`} onClick={() => toggleTask(task.id)}>
                       <button className="check-btn">
-                         {task.completed ? <CheckCircle2 className="check-icon" /> : <Circle className="uncheck-icon" />}
+                         {task.completed ? <Check className="check-icon" size={18} /> : <Circle className="uncheck-icon" size={18} />}
                       </button>
                       <span className="task-text">{task.text}</span>
                       {task.completed && task.xpClaimed && <span className="xp-floating">+10 XP</span>}
@@ -285,7 +304,7 @@ function App() {
                   {tasks.length === 0 && (
                     <div className="empty-state">
                       <ListTodo size={40} opacity={0.3} />
-                      <p>Sistem boşta. Yeni görev atanmadı.</p>
+                      <p>Tüm görevler tamamlandı, harika iş çıkardın.</p>
                     </div>
                   )}
                 </div>
@@ -295,29 +314,29 @@ function App() {
             {/* STATS TAB */}
             {activeTab === 'stats' && (
               <div className="stats-tab fade-in">
-                <h2>Kullanıcı Raporu</h2>
+                <h2>İstatistikler</h2>
                 
                 <div className="stats-grid">
                   <div className="stat-card">
-                    <h3>Seviye</h3>
+                    <h3>Gelişim</h3>
                     <div className="stat-value highlight">{level}</div>
-                    <p className="stat-desc">Developer Sınıfı</p>
+                    <p className="stat-desc">Mevcut Seviye</p>
                   </div>
                   <div className="stat-card">
-                    <h3>Toplam Odak</h3>
+                    <h3>Odak</h3>
                     <div className="stat-value">{totalPomodoros * 25}</div>
-                    <p className="stat-desc">Dakika İşlendi</p>
+                    <p className="stat-desc">Dakika</p>
                   </div>
                   <div className="stat-card">
-                    <h3>Görev İmhacı</h3>
+                    <h3>Başarı</h3>
                     <div className="stat-value">{tasksCompleted}</div>
                     <p className="stat-desc">Görev Tamamlandı</p>
                   </div>
                 </div>
 
-                <div className="radar-container">
-                   <div style={{color: 'var(--text-secondary)', textAlign: 'center', marginTop: '20px'}}>
-                     Daha fazla istatistik ve metrik verisi Level {level + 2}'de açılacak.
+                <div className="radar-container" style={{background: 'rgba(255,255,255,0.02)'}}>
+                   <div style={{color: 'var(--text-muted)', textAlign: 'center', opacity: 0.6}}>
+                     Çalışma alışkanlıkları grafiği çok yakında eklenecek.
                    </div>
                 </div>
               </div>
