@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Pause, RotateCcw, Check, Circle, ListTodo, BarChart3, Clock, Music, X } from 'lucide-react';
+import { Play, Pause, RotateCcw, Check, Circle, ListTodo, BarChart3, Clock, Music, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Howl } from 'howler';
 import './index.css';
 
@@ -34,16 +34,32 @@ function App() {
 
   const [ambientPlaying, setAmbientPlaying] = useState(false);
   const [lofiVolume, setLofiVolume] = useState(0.4);
+  const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const audioRef = useRef(null); // Reference for Howler instance
 
+  const lofiTracks = [
+    { id: 1, name: "Lofi Study", file: "/lofi.mp3" },
+    { id: 2, name: "Chill Vibe", file: "/lofi2.mp3" },
+    { id: 3, name: "Deep Focus", file: "/lofi3.mp3" }
+  ];
+
   useEffect(() => {
+    // Unload previous track if exists
+    if (audioRef.current) {
+      audioRef.current.unload();
+    }
+
     // Initialize Howler with local lofi track downloaded to public folder
     audioRef.current = new Howl({
-      src: ['/lofi.mp3'],
+      src: [lofiTracks[currentTrackIndex].file],
       loop: true,
       volume: lofiVolume,
       html5: true // Force HTML5 Audio so it streams properly without filling RAM
     });
+
+    if (ambientPlaying) {
+      audioRef.current.play();
+    }
 
     // Request notification permission on boot
     if ("Notification" in window && Notification.permission !== "granted") {
@@ -56,7 +72,7 @@ function App() {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [currentTrackIndex]); // Re-run when track index changes
 
   const toggleLofi = () => {
     if (!ambientPlaying) {
@@ -74,6 +90,14 @@ function App() {
     if (audioRef.current) {
       audioRef.current.volume(vol);
     }
+  };
+
+  const nextTrack = () => {
+    setCurrentTrackIndex((prev) => (prev + 1) % lofiTracks.length);
+  };
+
+  const prevTrack = () => {
+    setCurrentTrackIndex((prev) => (prev - 1 + lofiTracks.length) % lofiTracks.length);
   };
 
   // Quotes Array for a more organic feel
@@ -279,13 +303,20 @@ function App() {
             </div>
             
             {ambientPlaying && (
-              <input 
-                type="range" 
-                min="0" max="1" step="0.05" 
-                value={lofiVolume} 
-                onChange={changeLofiVolume} 
-                className="volume-slider no-drag"
-              />
+              <div className="lofi-controls no-drag fade-in">
+                <div className="track-selector">
+                  <button className="track-btn" onClick={prevTrack}><ChevronLeft size={16} /></button>
+                  <span className="track-name">{lofiTracks[currentTrackIndex].name}</span>
+                  <button className="track-btn" onClick={nextTrack}><ChevronRight size={16} /></button>
+                </div>
+                <input 
+                  type="range" 
+                  min="0" max="1" step="0.05" 
+                  value={lofiVolume} 
+                  onChange={changeLofiVolume} 
+                  className="volume-slider"
+                />
+              </div>
             )}
           </div>
         </nav>
