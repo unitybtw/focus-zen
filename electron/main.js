@@ -14,6 +14,7 @@ function createWindow() {
     minWidth: 800,
     minHeight: 600,
     titleBarStyle: 'hiddenInset', // Enables macOS traffic lights seamlessly
+    transparent: true, // Required for vibrancy and alpha channel
     vibrancy: 'under-window', // macOS native blur behind window
     visualEffectState: 'active',
     backgroundColor: '#00000000', // Ensures transparency passes through to vibrancy
