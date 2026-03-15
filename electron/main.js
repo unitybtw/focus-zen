@@ -9,15 +9,12 @@ let mainWindow;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1000,
-    height: 800,
+    width: 1100,
+    height: 750,
     minWidth: 800,
     minHeight: 600,
-    titleBarStyle: 'hiddenInset', // Enables macOS traffic lights seamlessly
-    transparent: true, // Required for vibrancy and alpha channel
-    vibrancy: 'under-window', // macOS native blur behind window
-    visualEffectState: 'active',
-    backgroundColor: '#00000000', // Ensures transparency passes through to vibrancy
+    titleBarStyle: 'hiddenInset',
+    backgroundColor: '#050505',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: true,
