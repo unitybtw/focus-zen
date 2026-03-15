@@ -405,6 +405,14 @@ function App() {
       setDefaultTime(focusDuration * 60);
       
       if (autoStartFocus) setIsRunning(true);
+      
+      // Reset Audio Ducking volume
+      if (noiseNodeRef.current) {
+        noiseNodeRef.current.gain.gain.setValueAtTime(noiseVolume, audioCtxRef.current.currentTime);
+      }
+      if (audioRef.current) {
+        audioRef.current.volume(lofiVolume);
+      }
     }
   };
 
@@ -412,7 +420,22 @@ function App() {
     let interval;
     if (isRunning && timeLeft > 0) {
       interval = setInterval(() => {
-        setTimeLeft((prev) => prev - 1);
+        setTimeLeft((prev) => {
+          const nextVal = prev - 1;
+          
+          // Audio Ducking (Commit #20)
+          if (nextVal <= 10 && nextVal > 0) {
+            const duckFactor = nextVal / 10;
+            if (noiseNodeRef.current) {
+              noiseNodeRef.current.gain.gain.setValueAtTime(noiseVolume * duckFactor, audioCtxRef.current.currentTime);
+            }
+            if (audioRef.current && ambientPlaying) {
+              audioRef.current.volume(lofiVolume * duckFactor);
+            }
+          }
+          
+          return nextVal;
+        });
       }, 1000);
     } else if (timeLeft === 0 && isRunning) {
       setIsRunning(false);
