@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Pause, RotateCcw, Check, Circle, ListTodo, BarChart3, Clock, Music, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Play, Pause, RotateCcw, Check, Circle, ListTodo, BarChart3, Clock, Music, X, ChevronLeft, ChevronRight, Focus, Maximize2, Minimize2 } from 'lucide-react';
 import { Howl } from 'howler';
 import './index.css';
 
@@ -38,10 +38,26 @@ function App() {
   const audioRef = useRef(null); // Reference for Howler instance
 
   const lofiTracks = [
-    { id: 1, name: "Lofi Study", file: "/lofi.mp3" },
-    { id: 2, name: "Chill Vibe", file: "/lofi2.mp3" },
-    { id: 3, name: "Deep Focus", file: "/lofi3.mp3" }
+    { id: 1, name: "Local Chill", file: "/lofi.mp3" },
+    { id: 2, name: "Lofi Radio", file: "https://stream.laut.fm/lofi" },
+    { id: 3, name: "Chillhop FM", file: "https://lofi.stream.laut.fm/lofi" }
   ];
+
+  // Immersive Mode
+  const [isImmersive, setIsImmersive] = useState(false);
+  const toggleImmersive = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(err => {
+        console.error("Error attempting to open fullscreen", err);
+      });
+      setIsImmersive(true);
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+      setIsImmersive(false);
+    }
+  };
 
   useEffect(() => {
     // Unload previous track if exists
@@ -52,6 +68,7 @@ function App() {
     // Initialize Howler with local lofi track downloaded to public folder
     audioRef.current = new Howl({
       src: [lofiTracks[currentTrackIndex].file],
+      format: ['mp3'],
       loop: true,
       volume: lofiVolume,
       html5: true // Force HTML5 Audio so it streams properly without filling RAM
@@ -260,7 +277,7 @@ function App() {
   };
 
   return (
-    <div className={`app-wrapper ${isRunning ? 'is-focusing' : ''}`}>
+    <div className={`app-wrapper ${isRunning ? 'is-focusing' : ''} ${isImmersive ? 'is-immersive' : ''}`}>
       {/* Background ambient lighting effects */}
       <div className="ambient-blob blob-1"></div>
       <div className="ambient-blob blob-2"></div>
@@ -272,7 +289,7 @@ function App() {
         {/* Sidebar */}
         <nav className="sidebar no-drag">
           <div className="brand">
-            <div className="brand-icon">⚡</div>
+            <div className="brand-icon"><Focus size={28} color="var(--accent-cyan)" /></div>
           </div>
           
           <div className="nav-items">
@@ -332,6 +349,10 @@ function App() {
               </div>
               <span className="xp-text">{xp}/{xpPerLevel} XP</span>
             </div>
+            
+            <button className="close-btn" style={{marginRight: '15px'}} onClick={toggleImmersive}>
+              {isImmersive ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+            </button>
             <button className="close-btn" onClick={closeApp}><X size={18} /></button>
           </header>
 
