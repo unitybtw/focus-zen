@@ -68,28 +68,40 @@ body {
   position: relative;
   width: 100vw; height: 100vh;
   display: flex;
-  background: rgba(10, 10, 10, 0.65); /* Semi-transparent to let macOS vibrancy shine through */
+  background: rgba(10, 10, 10, 0.65);
   overflow: hidden;
+  transition: all 1s ease-in-out;
 }
 
 .ambient-blob {
   position: absolute; border-radius: 50%; filter: blur(100px); opacity: 0.15; z-index: 0;
-  animation: float 12s ease-in-out infinite alternate;
-  will-change: transform;
+  animation: float 15s ease-in-out infinite alternate;
+  will-change: transform, background;
   pointer-events: none;
+  transition: background 2s ease, opacity 2s ease;
 }
+
 .blob-1 { 
-  top: -10%; left: -10%; width: 50vw; height: 50vw; background: #3b82f6; 
-  transform: translate(var(--mouse-x, 0), var(--mouse-y, 0));
+  top: -10%; left: -10%; width: 50vw; height: 50vw; background: var(--accent-primary); 
 }
+
 .blob-2 { 
-  bottom: -20%; right: -10%; width: 60vw; height: 60vw; background: #8b5cf6; animation-delay: -5s; 
-  transform: translate(calc(var(--mouse-x, 0) * -1.5), calc(var(--mouse-y, 0) * -1.5));
+  bottom: -20%; right: -10%; width: 60vw; height: 60vw; background: var(--accent-secondary); animation-delay: -5s; 
 }
+
+/* State-based Auras */
+.is-focusing .blob-1 { opacity: 0.25; filter: blur(120px); }
+.is-focusing .blob-2 { opacity: 0.1; }
+
+/* Custom Aura Shifting (Semantic) */
+.timer-ring.short .blob-1, .timer-ring.long .blob-1 { background: #10b981 !important; }
+.timer-ring.short .blob-2, .timer-ring.long .blob-2 { background: #3b82f6 !important; }
 
 @keyframes float { 
   0% { transform: translate(0, 0) scale(1); } 
-  100% { transform: translate(50px, 50px) scale(1.1); } 
+  33% { transform: translate(30px, -20px) scale(1.05); }
+  66% { transform: translate(-20px, 40px) scale(0.95); }
+  100% { transform: translate(0, 0) scale(1.1); } 
 }
 
 /* 2. GLASS CONTAINER LAYOUT */
