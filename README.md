@@ -1,39 +1,52 @@
-# ⚡ FocusZen
+# ⚡ FocusZen Professional
 
-![FocusZen Concept](https://img.shields.io/badge/Status-Beta-brightgreen.svg)
-![License](https://img.shields.io/badge/License-MIT-blue.svg)
+![FocusZen Pro](https://img.shields.io/badge/Version-2.0.0--Pro-accent?style=for-the-badge&labelColor=1e1e1e&color=00f2ff)
+![License](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)
 
-> **FocusZen**, yazılımcılar ve derin odaklanma gerektiren işler yapanlar için özel olarak geliştirilmiş, estetik, "Glassmorphism" tasarımlı, şeffaf bir masaüstü yaşam portalıdır.
+> **FocusZen Professional**, modern yazılım geliştiriciler ve yaratıcı profesyoneller için tasarlanmış, nörobilim temelli bir derin odaklanma portalıdır. 
 
-Electron ve React (Vite) kullanılarak tek bir pencerede fütüristik bir çalışma ortamı sunmak üzere tasarlanmıştır.
+## ✨ Profesyonel Özellikler
 
-## 🚀 Özellikler
+### 🎨 Tema Mükemmellik Sistemi
+Dört farklı profesyonel renk paleti ile çalışma ortamınızı kişiselleştirin:
+- **Midnight:** Derin odaklanma için klasik karanlık mod.
+- **Forest:** Doğadan ilham alan, göz yormayan yeşil tonlar.
+- **Ember:** Yaratıcı enerji için sıcak turuncu dokunuşlar.
+- **Lavender:** Sakinleştirici ve huzurlu mor paleti.
 
-- **Pomodoro Sayacı:** Kesintisiz odaklanma seansları için karanlık mod sayacı. (25 dk odak, 5 dk mola).
-- **Akıllı Görevler (To-Do):** Günlük hedeflerinizi girebileceğiniz hızlı ve minimal not alma/görev paneli.
-- **Glassmorphic Arayüz:** Pencerelerin arkasındaki kodları veya duvar kağıdını hafifçe gösteren şık, şeffaf, çerçevesiz (borderless) Windows/Mac uyumlu UI.
-- **Oluşturulan Sistem Kaynakları Yönetimi:** Minimum RAM ve CPU tüketimi hedeflenerek Electron kullanılmış olmasına rağmen yüksek optimize amaçlı tasarlanmıştır.
+### 📊 Gelişmiş Analitik (Focus Pulse)
+**Focus Pulse** ile verimliliğinizi görselleştirin. SVG tabanlı canlı grafikler seans yoğunluğunuzu ve gelişim seyrinizi takip eder.
 
-## 🛠 Kurulum
+### 🎧 Audio Engineering (Noise Machine)
+Dahili sentezleyici ile üretilen 3 farklı ses dokusu:
+- **Beyaz Gürültü:** Saf frekans temizliği.
+- **Yağmur:** Derin odaklanma için düşük geçişli (low-pass) yağmur sesi.
+- **Orman:** Yaratıcılık için band-pass filtrelenmiş doğa dokusu.
 
-Bilgisayarında Node.js yüklü olması gerekmektedir. Projeyi bilgisayarına indirdikten sonra şu adımları izle:
+### ⌨️ Power-User Kısayolları
+Ellerinizi klavyeden ayırmadan FocusZen'i yönetin:
+- `Boşluk (Space)`: Sayacı Başlat/Durdur.
+- `R`: Mevcut seansı sıfırla.
+- `1 - 4`: Tablar arası hızlı geçiş (Zaman, İşler, Analiz, Ayarlar).
+
+### 🔄 Veri Taşınabilirliği
+Tüm ilerleyişinizi, XP verilerinizi ve ayarlarınızı tek bir JSON dosyası olarak dışa aktarın veya farklı bir cihaza anında yükleyin.
+
+## 🛠 Teknik Kurulum
 
 ```bash
-# Bağımlılıkları Yükle
+# Bağımlılıkları yükle
 npm install
 
-# Geliştirme Ortamını Başlat (Electron + Vite)
+# Geliştirme modunda başlat
 npm run dev
 
-# Uygulamayı Paketle (Mac / Windows İçin Üret)
+# Profesyonel sürümü paketle
 npm run build
 ```
 
-## ⌨️ Katkıda Bulunma (Contributing)
+## 📜 Lisans
+Bu proje **MIT Lisansı** ile lisanslanmıştır. Kurumsal ve bireysel kullanım için tamamen özgürdür.
 
-Bu bir **Açık Kaynak** projesidir! FocusZen'e yeni özellikler (Örneğin: Müzik çalar, Notion entegrasyonu, Yapay Zeka özetleyici) eklemek için her zaman Pull Request (PR) gönderebilirsiniz. 
-
-Detaylı bilgi için lütfen [CONTRIBUTING.md](CONTRIBUTING.md) dosyasını okuyun.
-
-## 📄 Lisans
-Bu proje [MIT Lisansı](LICENSE) ile lisanslanmıştır. Dilediğiniz gibi kullanabilir, özelleştirebilir ve satabilirsiniz.
+---
+*Built with ❤️ by Antigravity AI for high-performance humans.*
