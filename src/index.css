@@ -810,6 +810,25 @@ body {
 .zen-toggle-btn:hover { background: rgba(255, 255, 255, 0.05); color: var(--accent-cyan); border-color: var(--accent-cyan); }
 .zen-toggle-btn.active { color: var(--accent-cyan); border-color: var(--accent-cyan); background: var(--accent-cyan-dim); }
 
+.lang-toggle-btn {
+  background: transparent;
+  border: 1px solid var(--glass-border);
+  color: var(--text-muted);
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  -webkit-app-region: no-drag;
+}
+
+.lang-toggle-btn:hover {
+  border-color: var(--accent-cyan);
+  color: var(--text-primary);
+  background: var(--accent-cyan-dim);
+}
+
 .zen-mode .sidebar { width: 0; padding: 0; border: none; overflow: hidden; opacity: 0; pointer-events: none; }
 .zen-mode .header { width: calc(100% - 40px); left: 20px; border: none; background: transparent; }
 .zen-mode .header-spacers { display: none; }

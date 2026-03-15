@@ -59,6 +59,40 @@ function App() {
   const [inputValue, setInputValue] = useState('');
   const [inputPriority, setInputPriority] = useState('medium');
 
+  // Multi-Language Support [NEW]
+  const [lang, setLang] = useState(() => localStorage.getItem('lang') || 'tr');
+  
+  const t = {
+    tr: {
+      timer: 'Zaman', tasks: 'İşler', stats: 'Performans', settings: 'Ayarlar', about: 'Hakkında',
+      focus: 'Odaklanma', break: 'Mola', reset: 'Sıfırla', skip: 'Atla',
+      addTask: 'Yeni bir görev ekle...', low: 'Düşük', medium: 'Orta', high: 'Yüksek',
+      emptyTasks: 'Tüm görevler tamamlandı, harika iş çıkardın.',
+      performance: 'Performans Analizi', level: 'Seviye', sessions: 'Oturum', completed: 'Tamamlandı',
+      achievements: 'Başarımlar', focusFlow: 'Odak Akışı', recentActivity: 'Son Aktivite',
+      appSettings: 'Uygulama Ayarları', timeSettings: 'Süre Ayarları (Dakika)', automation: 'Otomasyon',
+      autoBreak: 'Molayı Otomatik Başlat', autoFocus: 'Odağı Otomatik Başlat',
+      dataPortability: 'Veri Taşınabilirliği', export: 'Verileri Dışa Aktar', import: 'Verileri İçe Aktar',
+      on: 'Açık', off: 'Kapalı'
+    },
+    en: {
+      timer: 'Timer', tasks: 'Tasks', stats: 'Stats', settings: 'Settings', about: 'About',
+      focus: 'Focus', break: 'Break', reset: 'Reset', skip: 'Skip',
+      addTask: 'Add a new task...', low: 'Low', medium: 'Medium', high: 'High',
+      emptyTasks: 'All tasks completed, great job.',
+      performance: 'Performance Analysis', level: 'Level', sessions: 'Sessions', completed: 'Completed',
+      achievements: 'Achievements', focusFlow: 'Focus Flow', recentActivity: 'Recent Activity',
+      appSettings: 'App Settings', timeSettings: 'Time Settings (Minutes)', automation: 'Automation',
+      autoBreak: 'Auto Start Breaks', autoFocus: 'Auto Start Focus',
+      dataPortability: 'Data Portability', export: 'Export Data', import: 'Import Data',
+      on: 'On', off: 'Off'
+    }
+  }[lang];
+
+  useEffect(() => {
+    localStorage.setItem('lang', lang);
+  }, [lang]);
+
   // UX Notifications [NEW]
   const [notifications, setNotifications] = useState([]);
 
@@ -410,24 +444,24 @@ function App() {
           <div className="nav-items">
             <button className={`nav-btn ${activeTab === 'timer' ? 'active' : ''}`} onClick={() => setActiveTab('timer')}>
               <Clock size={20} />
-              <span>Zaman</span>
+              <span>{t.timer}</span>
             </button>
             <button className={`nav-btn ${activeTab === 'tasks' ? 'active' : ''}`} onClick={() => setActiveTab('tasks')}>
               <ListTodo size={20} />
-              <span>İşler</span>
+              <span>{t.tasks}</span>
               {tasks.filter(t => !t.completed).length > 0 && <div className="task-badge">{tasks.filter(t => !t.completed).length}</div>}
             </button>
             <button className={`nav-btn ${activeTab === 'stats' ? 'active' : ''}`} onClick={() => setActiveTab('stats')}>
               <BarChart3 size={20} />
-              <span>Performans</span>
+              <span>{t.stats}</span>
             </button>
             <button className={`nav-btn ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>
               <Settings2 size={20} />
-              <span>Ayarlar</span>
+              <span>{t.settings}</span>
             </button>
             <button className={`nav-btn ${activeTab === 'about' ? 'active' : ''}`} onClick={() => setActiveTab('about')}>
               <Info size={20} />
-              <span>Hakkında</span>
+              <span>{t.about}</span>
             </button>
           </div>
           <div className="goal-preview" title={`Günlük Hedef: ${totalPomodoros}/${dailyGoal}`}>
@@ -469,10 +503,21 @@ function App() {
                   <button key={t.id} className="theme-dot" style={{ backgroundColor: t.color }} onClick={() => document.documentElement.setAttribute('data-theme', t.id)} title={t.id.charAt(0).toUpperCase() + t.id.slice(1)} />
                 ))}
                 <div className="v-divider"></div>
-                <button className={`zen-toggle-btn ${isZen ? 'active' : ''}`} onClick={toggleZen} title={isZen ? 'Hızlı Modu Kapat' : 'Zen (Minimalist) Modu Aç'}>
-                  {isZen ? <Maximize2 size={18} /> : <Minimize2 size={18} />}
-                </button>
-              </div>
+                <button 
+                className={`zen-toggle-btn ${isZen ? 'active' : ''}`}
+                onClick={toggleZen}
+                title={isZen ? 'Hızlı Modu Kapat' : 'Zen (Minimalist) Modu Aç'}
+              >
+                {isZen ? <Maximize2 size={18} /> : <Minimize2 size={18} />}
+              </button>
+              <div className="v-divider"></div>
+              <button 
+                className="lang-toggle-btn"
+                onClick={() => setLang(lang === 'tr' ? 'en' : 'tr')}
+              >
+                {lang.toUpperCase()}
+              </button>
+            </div>
               <div className="profile-compact">
                 <div className="xp-bar-container">
                   <div className="xp-label">Lvl {level}</div>
@@ -489,7 +534,7 @@ function App() {
                       <circle className="ring-progress" cx="50" cy="50" r="45" style={{ strokeDasharray: 283, strokeDashoffset: 283 - (timeLeft / defaultTime) * 283 }} />
                     </svg>
                     <div className="timer-content">
-                      <span className="timer-type">{type === 'focus' ? 'Odaklanma' : 'Mola'}</span>
+                      <span className="timer-type">{type === 'focus' ? t.focus : t.break}</span>
                       <span className="timer-clock">{Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}</span>
                     </div>
                   </div>
@@ -498,9 +543,9 @@ function App() {
                   {tags.map(t => <button key={t.label} className={`tag-btn ${activeTagItem.label === t.label ? 'active' : ''}`} onClick={() => setActiveTagItem(t)}>{t.icon}<span>{t.label}</span></button>)}
                 </div>
                 <div className="timer-controls slide-up">
-                  <button className="ctrl-btn secondary" onClick={resetTimer} title="Sıfırla"><RotateCcw size={22} /></button>
+                  <button className="ctrl-btn secondary" onClick={resetTimer} title={t.reset}><RotateCcw size={22} /></button>
                   <button className="ctrl-btn primary" onClick={() => setIsRunning(!isRunning)}>{isRunning ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" style={{ marginLeft: '4px' }} />}</button>
-                  <button className="ctrl-btn secondary" onClick={handleTimerComplete} title="Atla"><Check size={22} /></button>
+                  <button className="ctrl-btn secondary" onClick={handleTimerComplete} title={t.skip}><Check size={22} /></button>
                 </div>
               </div>
             )}
@@ -508,38 +553,38 @@ function App() {
               <div className="tasks-tab">
                 <div className="tasks-header slide-up">
                   <div className="input-glass">
-                    <input type="text" placeholder="Yeni bir görev ekle..." value={inputValue} onChange={(e) => setInputValue(e.target.value)} onKeyDown={addTask} />
-                    <div className="priority-select">{['low', 'medium', 'high'].map(p => <button key={p} className={`prio-btn ${inputPriority === p ? 'active' : ''} ${p}`} onClick={() => setInputPriority(p)} title={`${p.charAt(0).toUpperCase() + p.slice(1)} Öncelik`}><Flag size={14} /></button>)}</div>
+                    <input type="text" placeholder={t.addTask} value={inputValue} onChange={(e) => setInputValue(e.target.value)} onKeyDown={addTask} />
+                    <div className="priority-select">{['low', 'medium', 'high'].map(p => <button key={p} className={`prio-btn ${inputPriority === p ? 'active' : ''} ${p}`} onClick={() => setInputPriority(p)} title={`${t[p]} Öncelik`}><Flag size={14} /></button>)}</div>
                   </div>
                 </div>
                 <div className="task-list">
                   {tasks.map((task, index) => (
                     <div key={task.id} className={`task-card ${task.completed ? 'completed' : ''}`} onClick={() => toggleTask(task.id)} style={{ animationDelay: `${index * 0.05}s` }}>
                       <button className="check-btn">{task.completed ? <Check className="check-icon" size={18} /> : <Circle className="uncheck-icon" size={18} />}</button>
-                      <div className="task-content"><span className="task-text">{task.text}</span><div className="task-meta"><span className={`prio-badge ${task.priority || 'medium'}`}>{task.priority === 'high' ? 'Yüksek' : task.priority === 'low' ? 'Düşük' : 'Orta'}</span></div></div>
+                      <div className="task-content"><span className="task-text">{task.text}</span><div className="task-meta"><span className={`prio-badge ${task.priority || 'medium'}`}>{t[task.priority || 'medium']}</span></div></div>
                       {task.completed && task.xpClaimed && <span className="xp-floating">+10 XP</span>}
                     </div>
                   ))}
-                  {tasks.length === 0 && <div className="empty-state"><ListTodo size={40} opacity={0.3} /><p>Tüm görevler tamamlandı, harika iş çıkardın.</p></div>}
+                  {tasks.length === 0 && <div className="empty-state"><ListTodo size={40} opacity={0.3} /><p>{t.emptyTasks}</p></div>}
                 </div>
               </div>
             )}
             {activeTab === 'stats' && (
               <div className="stats-tab fade-in">
-                <h2>Performans Analizi</h2>
+                <h2>{t.performance}</h2>
                 <div className="stats-grid">
-                  <div className="stat-card"><div className="stat-icon-wrapper"><Trophy size={18} /></div><h3>Gelişim</h3><div className="stat-value highlight">{level}</div><p className="stat-desc">Mevcut Seviye</p></div>
-                  <div className="stat-card"><div className="stat-icon-wrapper"><Target size={18} /></div><h3>Odak</h3><div className="stat-value">{totalPomodoros}</div><p className="stat-desc">Oturum</p></div>
-                  <div className="stat-card"><div className="stat-icon-wrapper"><TrendingUp size={18} /></div><h3>Başarı</h3><div className="stat-value">{tasksCompleted}</div><p className="stat-desc">Görev Tamamlandı</p></div>
+                  <div className="stat-card"><div className="stat-icon-wrapper"><Trophy size={18} /></div><h3>{t.level}</h3><div className="stat-value highlight">{level}</div><p className="stat-desc">Professional</p></div>
+                  <div className="stat-card"><div className="stat-icon-wrapper"><Target size={18} /></div><h3>{t.timer}</h3><div className="stat-value">{totalPomodoros}</div><p className="stat-desc">{t.sessions}</p></div>
+                  <div className="stat-card"><div className="stat-icon-wrapper"><TrendingUp size={18} /></div><h3>{t.stats}</h3><div className="stat-value">{tasksCompleted}</div><p className="stat-desc">{t.completed}</p></div>
                 </div>
                 <div className="achievements-section slide-up">
-                  <div className="section-header"><Trophy size={18} color="var(--accent-cyan)" /><h3>Başarımlar</h3></div>
+                  <div className="section-header"><Trophy size={18} color="var(--accent-cyan)" /><h3>{t.achievements}</h3></div>
                   <div className="achievements-grid">
                     {achievements.map(a => <div key={a.id} className={`achievement-card ${a.unlocked ? 'unlocked' : 'locked'}`} title={a.description}><div className="a-icon">{a.icon}</div><div className="a-info"><span className="a-title">{a.title}</span></div></div>)}
                   </div>
                 </div>
                 <div className="analytics-card slide-up">
-                  <div className="analytics-header"><TrendingUp size={18} color="var(--accent-cyan)" /><h3>Odak Akışı</h3></div>
+                  <div className="analytics-header"><TrendingUp size={18} color="var(--accent-cyan)" /><h3>{t.focusFlow}</h3></div>
                   <div className="pulse-chart-container">
                     <svg viewBox="0 0 400 100" className="pulse-svg">
                       <defs><linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="var(--accent-cyan)" stopOpacity="0.4" /><stop offset="100%" stopColor="var(--accent-cyan)" stopOpacity="0" /></linearGradient></defs>
@@ -552,7 +597,7 @@ function App() {
                 </div>
                 {focusHistory.length > 0 && (
                   <div className="history-section fade-in" style={{ marginTop: '30px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px', paddingLeft: '5px' }}><History size={18} color="var(--accent-cyan)" /><h3 style={{ fontSize: '1rem', fontWeight: 600 }}>Son Aktivite</h3></div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px', paddingLeft: '5px' }}><History size={18} color="var(--accent-cyan)" /><h3 style={{ fontSize: '1rem', fontWeight: 600 }}>{t.recentActivity}</h3></div>
                     <div className="history-list" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                       {focusHistory.map(entry => (
                         <div key={entry.id} className="history-item slide-up">
@@ -567,26 +612,26 @@ function App() {
             )}
             {activeTab === 'settings' && (
               <div className="settings-tab slide-up" style={{ maxWidth: '500px', margin: '0 auto', width: '100%' }}>
-                <h2>Uygulama Ayarları</h2>
+                <h2>{t.appSettings}</h2>
                 <div className="settings-card">
                   <div className="settings-group">
-                    <div className="settings-header"><Clock size={18} color="var(--accent-cyan)" /><span>Süre Ayarları (Dakika)</span></div>
+                    <div className="settings-header"><Clock size={18} color="var(--accent-cyan)" /><span>{t.timeSettings}</span></div>
                     <div className="settings-inputs">
-                      <div className="input-field"><label>Odak</label><input type="number" value={focusDuration} onChange={(e) => { const val = parseInt(e.target.value) || 1; setFocusDuration(val); if (!isRunning) { setType('focus'); setTimeLeft(val * 60); } }} /></div>
-                      <div className="input-field"><label>Kısa Mola</label><input type="number" value={shortBreakDuration} onChange={(e) => setShortBreakDuration(parseInt(e.target.value) || 1)} /></div>
-                      <div className="input-field"><label>Uzun Mola</label><input type="number" value={longBreakDuration} onChange={(e) => setLongBreakDuration(parseInt(e.target.value) || 1)} /></div>
+                      <div className="input-field"><label>{t.focus}</label><input type="number" value={focusDuration} onChange={(e) => { const val = parseInt(e.target.value) || 1; setFocusDuration(val); if (!isRunning) { setType('focus'); setTimeLeft(val * 60); } }} /></div>
+                      <div className="input-field"><label>{lang === 'tr' ? 'Kısa Mola' : 'Short Break'}</label><input type="number" value={shortBreakDuration} onChange={(e) => setShortBreakDuration(parseInt(e.target.value) || 1)} /></div>
+                      <div className="input-field"><label>{lang === 'tr' ? 'Uzun Mola' : 'Long Break'}</label><input type="number" value={longBreakDuration} onChange={(e) => setLongBreakDuration(parseInt(e.target.value) || 1)} /></div>
                     </div>
                   </div>
                   <div className="divider" style={{ margin: '20px 0' }}></div>
                   <div className="settings-group">
-                    <div className="settings-header"><Bell size={18} color="var(--accent-cyan)" /><span>Otomasyon</span></div>
-                    <div className="settings-toggle"><span>Molayı Otomatik Başlat</span><button className={`toggle-pill ${autoStartBreaks ? 'active' : ''}`} onClick={() => setAutoStartBreaks(!autoStartBreaks)}>{autoStartBreaks ? 'Açık' : 'Kapalı'}</button></div>
-                    <div className="settings-toggle"><span>Odağı Otomatik Başlat</span><button className={`toggle-pill ${autoStartFocus ? 'active' : ''}`} onClick={() => setAutoStartFocus(!autoStartFocus)}>{autoStartFocus ? 'Açık' : 'Kapalı'}</button></div>
+                    <div className="settings-header"><Bell size={18} color="var(--accent-cyan)" /><span>{t.automation}</span></div>
+                    <div className="settings-toggle"><span>{t.autoBreak}</span><button className={`toggle-pill ${autoStartBreaks ? 'active' : ''}`} onClick={() => setAutoStartBreaks(!autoStartBreaks)}>{autoStartBreaks ? t.on : t.off}</button></div>
+                    <div className="settings-toggle"><span>{t.autoFocus}</span><button className={`toggle-pill ${autoStartFocus ? 'active' : ''}`} onClick={() => setAutoStartFocus(!autoStartFocus)}>{autoStartFocus ? t.on : t.off}</button></div>
                   </div>
                   <div className="divider" style={{ margin: '20px 0' }}></div>
                   <div className="settings-group">
-                    <div className="settings-header"><History size={18} color="var(--accent-cyan)" /><span>Veri Taşınabilirliği</span></div>
-                    <div className="data-actions"><button className="data-btn export" onClick={exportData}><Download size={16} /><span>Verileri Dışa Aktar</span></button><label className="data-btn import"><Upload size={16} /><span>Verileri İçe Aktar</span><input type="file" accept=".json" onChange={importData} style={{ display: 'none' }} /></label></div>
+                    <div className="settings-header"><History size={18} color="var(--accent-cyan)" /><span>{t.dataPortability}</span></div>
+                    <div className="data-actions"><button className="data-btn export" onClick={exportData}><Download size={16} /><span>{t.export}</span></button><label className="data-btn import"><Upload size={16} /><span>{t.import}</span><input type="file" accept=".json" onChange={importData} style={{ display: 'none' }} /></label></div>
                   </div>
                 </div>
               </div>
