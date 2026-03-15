@@ -31,13 +31,31 @@ function App() {
   const [isRunning, setIsRunning] = useState(false);
   const [isBreak, setIsBreak] = useState(false);
   
-  // Ambient Sound (Visualizer Simulation)
   const [ambientPlaying, setAmbientPlaying] = useState(false);
+  const audioRef = useRef(null); // Reference for the actual audio player
+
+  const toggleLofi = () => {
+    if (!ambientPlaying) {
+      if (!audioRef.current) {
+        // stream.laut.fm is a reliable public radio streaming service
+        audioRef.current = new Audio('https://stream.laut.fm/lofi');
+        audioRef.current.volume = 0.5;
+        audioRef.current.crossOrigin = "anonymous";
+      }
+      audioRef.current.play().catch(err => console.error("Audio playback error:", err));
+      setAmbientPlaying(true);
+    } else {
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+      setAmbientPlaying(false);
+    }
+  };
 
   // Tasks State
   const [tasks, setTasks] = useState([
-    { id: 1, text: "Günün en önemli görevini tamamla", completed: false },
-    { id: 2, text: "React uygulamasını optimize et", completed: false }
+    { id: 1, text: "Günün en önemli görevini tamamla", completed: false, xpClaimed: false },
+    { id: 2, text: "React uygulamasını optimize et", completed: false, xpClaimed: false }
   ]);
   const [inputValue, setInputValue] = useState("");
 
@@ -132,7 +150,7 @@ function App() {
   // Task Controls
   const addTask = (e) => {
     if (e.key === 'Enter' && inputValue.trim()) {
-      setTasks([{ id: Date.now(), text: inputValue, completed: false }, ...tasks]);
+      setTasks([{ id: Date.now(), text: inputValue, completed: false, xpClaimed: false }, ...tasks]);
       setInputValue("");
     }
   };
@@ -140,13 +158,12 @@ function App() {
   const toggleTask = (id) => {
     setTasks(tasks.map(t => {
       if (t.id === id) {
-        if (!t.completed) {
-          gainXp(10); // 10 XP for tasks
+        if (!t.completed && !t.xpClaimed) {
+          gainXp(10); // 10 XP only for the first time
           setTasksCompleted(prev => prev + 1);
-        } else {
-          // If un-completing, optionally remove XP? We'll just keep it simple.
+          return { ...t, completed: true, xpClaimed: true }; // Mark as claimed
         }
-        return { ...t, completed: !t.completed };
+        return { ...t, completed: !t.completed }; // Just toggle visuals after
       }
       return t;
     }));
@@ -193,7 +210,7 @@ function App() {
             </button>
           </div>
 
-          <div className="ambient-toggle" onClick={() => setAmbientPlaying(!ambientPlaying)}>
+          <div className="ambient-toggle" onClick={toggleLofi}>
             <div className={`visualizer ${ambientPlaying ? 'playing' : ''}`}>
               <span></span><span></span><span></span><span></span>
             </div>
@@ -262,7 +279,7 @@ function App() {
                          {task.completed ? <CheckCircle2 className="check-icon" /> : <Circle className="uncheck-icon" />}
                       </button>
                       <span className="task-text">{task.text}</span>
-                      {task.completed && <span className="xp-floating">+10 XP</span>}
+                      {task.completed && task.xpClaimed && <span className="xp-floating">+10 XP</span>}
                     </div>
                   ))}
                   {tasks.length === 0 && (
