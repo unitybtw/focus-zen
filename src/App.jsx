@@ -520,7 +520,7 @@ function App() {
         {/* Electron Drag Region for Frameless Window */}
         <div className="drag-region"></div>
         
-        {/* Sidebar */}
+        {/* Sidebar: Primary Navigation and Daily Goal Progress */}
         <nav className="sidebar no-drag">
           <div className="brand">
             <div className="brand-icon"><Focus size={28} color="var(--accent-cyan)" /></div>
@@ -622,7 +622,7 @@ function App() {
           </div>
         </nav>
 
-        {/* Main Content Area */}
+        {/* Main Content Area: Dynamically switches based on activeTab (timer, tasks, stats, settings, about) */}
         <main className="content-area">
           {/* Header */}
           <header className="header no-drag">
