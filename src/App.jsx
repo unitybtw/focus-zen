@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Pause, RotateCcw, Check, Circle, ListTodo, BarChart3, Clock, Music, X, ChevronLeft, ChevronRight, Focus, Cloud, Wind, Zap, Tag, History, Trophy, Target, TrendingUp, Settings as SettingsIcon, Settings2, Bell, Volume2, Flag, ChevronUp, ChevronDown, ListFilter, CloudRain, Trees, Download, Upload, Info } from 'lucide-react';
+import { Play, Pause, RotateCcw, Check, Circle, ListTodo, BarChart3, Clock, Music, X, ChevronLeft, ChevronRight, Focus, Cloud, Wind, Zap, Tag, History, Trophy, Target, TrendingUp, Settings as SettingsIcon, Settings2, Bell, Volume2, Flag, ChevronUp, ChevronDown, ListFilter, CloudRain, Trees, Download, Upload, Info, Minimize2, Maximize2 } from 'lucide-react';
 import { Howl } from 'howler';
 import './index.css';
 
@@ -40,6 +40,9 @@ function App() {
   const [longBreakDuration, setLongBreakDuration] = useState(15);
   const [autoStartBreaks, setAutoStartBreaks] = useState(false);
   const [autoStartFocus, setAutoStartFocus] = useState(false);
+  const [isZen, setIsZen] = useState(false);
+
+  const toggleZen = () => setIsZen(!isZen);
 
   // Add XP
   const gainXp = (amount) => {
@@ -546,7 +549,7 @@ function App() {
 
 
   return (
-    <div className={`app-wrapper ${isRunning ? 'is-focusing' : ''}`}>
+    <div className={`app-wrapper ${isRunning ? 'is-focusing' : ''} ${isZen ? 'zen-mode' : ''}`}>
       {/* Background ambient lighting effects */}
       <div className="ambient-blob blob-1"></div>
       <div className="ambient-blob blob-2"></div>
@@ -680,6 +683,10 @@ function App() {
                   title={`${t.id.charAt(0).toUpperCase() + t.id.slice(1)} Teması`}
                 />
               ))}
+              <div className="divider-v"></div>
+              <button className={`zen-toggle-btn ${isZen ? 'active' : ''}`} onClick={toggleZen} title={isZen ? "Zen Modundan Çık" : "Zen Moduna Gir"}>
+                {isZen ? <Maximize2 size={14} /> : <Minimize2 size={14} />}
+              </button>
             </div>
 
             <div className="streak-badge" title="Günlük Odak Serisi">

@@ -733,3 +733,26 @@ body {
   display: flex; align-items: center; gap: 10px; padding-left: 5px; margin-bottom: 10px;
 }
 .section-header h3 { font-size: 0.9rem; font-weight: 600; opacity: 0.9; }
+
+/* Zen Mode Elite Overrides */
+.divider-v {
+  width: 1px; height: 16px; background: var(--glass-border); margin: 0 5px;
+}
+
+.zen-toggle-btn {
+  background: transparent; border: 1px solid var(--glass-border);
+  color: var(--text-muted); width: 28px; height: 28px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.zen-toggle-btn:hover { background: rgba(255, 255, 255, 0.05); color: var(--accent-cyan); border-color: var(--accent-cyan); }
+.zen-toggle-btn.active { color: var(--accent-cyan); border-color: var(--accent-cyan); background: var(--accent-cyan-dim); }
+
+.zen-mode .sidebar { width: 0; padding: 0; border: none; overflow: hidden; opacity: 0; pointer-events: none; }
+.zen-mode .header { width: calc(100% - 40px); left: 20px; border: none; background: transparent; }
+.zen-mode .header-spacers { display: none; }
+.zen-mode .streak-badge, .zen-mode .user-profile { opacity: 0; pointer-events: none; transform: translateY(-10px); }
+.zen-mode .content-area { padding-left: 0; display: flex; align-items: center; justify-content: center; }
+.zen-mode .timer-tab { transform: scale(1.1); transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+.zen-mode .quote-container { opacity: 0.5; }
