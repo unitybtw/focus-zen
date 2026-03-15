@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Pause, RotateCcw, Check, Circle, ListTodo, BarChart3, Clock, Music, X, ChevronLeft, ChevronRight, Focus, Cloud, Wind, Zap, Tag, History, Trophy, Target, TrendingUp, Settings as SettingsIcon, Settings2, Bell, Volume2 } from 'lucide-react';
+import { Play, Pause, RotateCcw, Check, Circle, ListTodo, BarChart3, Clock, Music, X, ChevronLeft, ChevronRight, Focus, Cloud, Wind, Zap, Tag, History, Trophy, Target, TrendingUp, Settings as SettingsIcon, Settings2, Bell, Volume2, Flag, ChevronUp, ChevronDown, ListFilter } from 'lucide-react';
 import { Howl } from 'howler';
 import './index.css';
 
@@ -219,6 +219,7 @@ function App() {
     { id: 2, text: "FocusZen uygulamasını incele", completed: false, xpClaimed: false }
   ]);
   const [inputValue, setInputValue] = useState("");
+  const [inputPriority, setInputPriority] = useState('medium'); // low, medium, high
 
   // Refs for audio (Using browser oscillator API for futuristic beep sounds)
   const audioCtxRef = useRef(null);
@@ -355,7 +356,7 @@ function App() {
   // Task Controls
   const addTask = (e) => {
     if (e.key === 'Enter' && inputValue.trim()) {
-      setTasks([{ id: Date.now(), text: inputValue, completed: false, xpClaimed: false }, ...tasks]);
+      setTasks([{ id: Date.now(), text: inputValue, completed: false, xpClaimed: false, priority: inputPriority }, ...tasks]);
       setInputValue("");
     }
   };
@@ -581,13 +582,27 @@ function App() {
               <div className="tasks-tab slide-up">
                 <h2>Yapılacaklar</h2>
                 <div className="input-group">
-                  <input 
-                    type="text" 
-                    placeholder="Yeni bir görev ekle ve Enter'a bas..."
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    onKeyDown={addTask}
-                  />
+                  <div className="task-input-wrapper">
+                    <input 
+                      type="text" 
+                      placeholder="Yeni bir görev ekle..."
+                      value={inputValue}
+                      onChange={(e) => setInputValue(e.target.value)}
+                      onKeyDown={addTask}
+                    />
+                    <div className="priority-select">
+                      {['low', 'medium', 'high'].map(p => (
+                        <button 
+                          key={p}
+                          className={`prio-btn ${inputPriority === p ? 'active' : ''} ${p}`}
+                          onClick={() => setInputPriority(p)}
+                          title={`${p.charAt(0).toUpperCase() + p.slice(1)} Öncelik`}
+                        >
+                          <Flag size={14} />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
                 <div className="task-list">
                   {tasks.map((task, index) => (
@@ -600,7 +615,14 @@ function App() {
                       <button className="check-btn">
                          {task.completed ? <Check className="check-icon" size={18} /> : <Circle className="uncheck-icon" size={18} />}
                       </button>
-                      <span className="task-text">{task.text}</span>
+                      <div className="task-content">
+                        <span className="task-text">{task.text}</span>
+                        <div className="task-meta">
+                          <span className={`prio-badge ${task.priority || 'medium'}`}>
+                            {task.priority === 'high' ? 'Yüksek' : task.priority === 'low' ? 'Düşük' : 'Orta'}
+                          </span>
+                        </div>
+                      </div>
                       {task.completed && task.xpClaimed && <span className="xp-floating">+10 XP</span>}
                     </div>
                   ))}
