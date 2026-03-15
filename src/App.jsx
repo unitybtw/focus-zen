@@ -636,6 +636,100 @@ function App() {
               </div>
             )}
 
+            {/* STATS TAB */}
+            {activeTab === 'stats' && (
+              <div className="stats-tab fade-in">
+                <h2>Performans Analizi</h2>
+                
+                <div className="stats-grid">
+                  <div className="stat-card">
+                    <div className="stat-icon-wrapper"><Trophy size={18} /></div>
+                    <h3>Gelişim</h3>
+                    <div className="stat-value highlight">{level}</div>
+                    <p className="stat-desc">Mevcut Seviye</p>
+                  </div>
+                  <div className="stat-card">
+                    <div className="stat-icon-wrapper"><Target size={18} /></div>
+                    <h3>Odak</h3>
+                    <div className="stat-value">{totalPomodoros}</div>
+                    <p className="stat-desc">Oturum</p>
+                  </div>
+                  <div className="stat-card">
+                    <div className="stat-icon-wrapper"><TrendingUp size={18} /></div>
+                    <h3>Başarı</h3>
+                    <div className="stat-value">{tasksCompleted}</div>
+                    <p className="stat-desc">Görev Tamamlandı</p>
+                  </div>
+                </div>
+
+                {/* Focus Pulse Chart [NEW] */}
+                <div className="analytics-card slide-up">
+                  <div className="analytics-header">
+                    <TrendingUp size={18} color="var(--accent-cyan)" />
+                    <h3>Odak Akışı</h3>
+                  </div>
+                  <div className="pulse-chart-container">
+                    <svg viewBox="0 0 400 100" className="pulse-svg">
+                      <defs>
+                        <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="var(--accent-cyan)" stopOpacity="0.4" />
+                          <stop offset="100%" stopColor="var(--accent-cyan)" stopOpacity="0" />
+                        </linearGradient>
+                      </defs>
+                      <path 
+                        className="pulse-path"
+                        d={`M 0 80 ${focusHistory.map((h, i) => `L ${(i + 1) * 80} ${80 - (h.duration / 60) * 50}`).join(' ')} L 400 80`}
+                        fill="url(#chartGradient)"
+                      />
+                      <path 
+                        className="pulse-line"
+                        d={`M 0 80 ${focusHistory.map((h, i) => `L ${(i + 1) * 80} ${80 - (h.duration / 60) * 50}`).join(' ')}`}
+                        fill="none"
+                        stroke="var(--accent-cyan)"
+                        strokeWidth="2"
+                      />
+                      {focusHistory.map((h, i) => (
+                        <circle 
+                          key={h.id} 
+                          cx={(i + 1) * 80} 
+                          cy={80 - (h.duration / 60) * 50} 
+                          r="3" 
+                          fill="var(--accent-cyan)" 
+                          className="pulse-point"
+                        />
+                      ))}
+                    </svg>
+                    <div className="chart-labels">
+                      <span>Geçmiş Seanslar (Süre Yoğunluğu)</span>
+                    </div>
+                  </div>
+                </div>
+
+                {focusHistory.length > 0 && (
+                  <div className="history-section fade-in" style={{ marginTop: '30px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px', paddingLeft: '5px' }}>
+                      <History size={18} color="var(--accent-cyan)" />
+                      <h3 style={{ fontSize: '1rem', fontWeight: 600 }}>Son Aktivite</h3>
+                    </div>
+                    <div className="history-list" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      {focusHistory.map(entry => (
+                        <div key={entry.id} className="history-item slide-up">
+                          <div className="h-tag">
+                            <span>{tags.find(t => t.label === entry.tag)?.icon}</span>
+                            <span>{entry.tag}</span>
+                          </div>
+                          <div className="h-meta">
+                            <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{entry.duration} dk</span>
+                            <span style={{ color: 'var(--text-muted)' }}>{entry.time}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* SETTINGS TAB [NEW] */}
             {activeTab === 'settings' && (
               <div className="settings-tab slide-up" style={{ maxWidth: '500px', margin: '0 auto', width: '100%' }}>

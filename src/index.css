@@ -545,3 +545,54 @@ body {
   display: flex; align-items: center; justify-content: space-between;
   font-size: 0.85rem; color: var(--text-primary);
 }
+
+/* Analytics Card Professional UI */
+.analytics-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 25px;
+  margin: 30px 0;
+  box-shadow: var(--glass-shadow);
+  animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.analytics-header {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 20px;
+}
+
+.analytics-header h3 {
+  font-size: 0.9rem; font-weight: 600; color: var(--text-primary);
+  text-transform: uppercase; letter-spacing: 1px;
+}
+
+.pulse-chart-container {
+  width: 100%; height: 120px; position: relative;
+  background: rgba(0,0,0,0.2); border-radius: 12px;
+  padding: 10px; border: 1px solid rgba(255,255,255,0.03);
+}
+
+.pulse-svg { width: 100%; height: 100%; overflow: visible; }
+
+.pulse-line {
+  stroke-dasharray: 1000; stroke-dashoffset: 1000;
+  animation: drawLine 2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes drawLine { to { stroke-dashoffset: 0; } }
+
+.pulse-point {
+  animation: pulsePoint 2s infinite alternate; opacity: 0;
+  animation-fill-mode: forwards;
+}
+
+@keyframes pulsePoint {
+  from { r: 3; opacity: 0.5; }
+  to { r: 5; opacity: 1; filter: blur(2px); }
+}
+
+.chart-labels {
+  display: flex; justify-content: center; margin-top: 10px;
+  font-size: 0.7rem; color: var(--text-muted); font-weight: 500;
+}
