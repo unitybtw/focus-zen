@@ -654,3 +654,39 @@ body {
   font-size: 0.7rem; color: var(--text-muted); margin-top: 10px;
   text-align: center; font-style: italic;
 }
+
+/* About Tab Professional Branding */
+.brand-hero {
+  margin: 40px 0 30px;
+  animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.about-icon-wrapper {
+  width: 100px; height: 100px; background: var(--glass-bg);
+  border: 1px solid var(--glass-border); border-radius: 24px;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 20px; box-shadow: var(--glass-shadow);
+}
+
+.version-badge {
+  display: inline-block; background: var(--accent-cyan-dim);
+  color: var(--accent-cyan); padding: 4px 12px; border-radius: 20px;
+  font-size: 0.75rem; font-weight: 700; margin-top: 10px;
+  border: 1px solid rgba(0, 242, 255, 0.2);
+}
+
+.about-card {
+  background: var(--glass-bg); border: 1px solid var(--glass-border);
+  border-radius: 20px; padding: 30px; box-shadow: var(--glass-shadow);
+  animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+}
+
+.vision-text {
+  font-size: 0.95rem; color: var(--text-primary); line-height: 1.6;
+  font-weight: 500; opacity: 0.9;
+}
+
+.credits-section h3 {
+  font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;
+  color: var(--text-muted); margin-bottom: 10px;
+}

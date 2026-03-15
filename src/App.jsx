@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Pause, RotateCcw, Check, Circle, ListTodo, BarChart3, Clock, Music, X, ChevronLeft, ChevronRight, Focus, Cloud, Wind, Zap, Tag, History, Trophy, Target, TrendingUp, Settings as SettingsIcon, Settings2, Bell, Volume2, Flag, ChevronUp, ChevronDown, ListFilter, CloudRain, Trees, Download, Upload } from 'lucide-react';
+import { Play, Pause, RotateCcw, Check, Circle, ListTodo, BarChart3, Clock, Music, X, ChevronLeft, ChevronRight, Focus, Cloud, Wind, Zap, Tag, History, Trophy, Target, TrendingUp, Settings as SettingsIcon, Settings2, Bell, Volume2, Flag, ChevronUp, ChevronDown, ListFilter, CloudRain, Trees, Download, Upload, Info } from 'lucide-react';
 import { Howl } from 'howler';
 import './index.css';
 
@@ -530,6 +530,10 @@ function App() {
               <Settings2 size={20} />
               <span>Ayarlar</span>
             </button>
+            <button className={`nav-btn ${activeTab === 'about' ? 'active' : ''}`} onClick={() => setActiveTab('about')}>
+              <Info size={20} />
+              <span>Hakkında</span>
+            </button>
           </div>
 
           {/* Daily Goal Progress Ring */}
@@ -941,6 +945,33 @@ function App() {
                       </label>
                     </div>
                     <p className="settings-hint">İlerleyişinizi ve ayarlarınızı bir JSON dosyası olarak yedekleyin.</p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {/* ABOUT TAB [NEW] */}
+            {activeTab === 'about' && (
+              <div className="about-tab slide-up" style={{ maxWidth: '500px', margin: '0 auto', width: '100%', textAlign: 'center' }}>
+                <div className="brand-hero">
+                  <div className="about-icon-wrapper">
+                    <Focus size={48} color="var(--accent-cyan)" />
+                  </div>
+                  <h1>FocusZen</h1>
+                  <p className="version-badge">Version 2.0.0 Pro</p>
+                </div>
+
+                <div className="about-card">
+                  <p className="vision-text">
+                    FocusZen, derin odaklanma ve sürdürülebilir üretkenlik için modern bir dijital sığınaktır. 
+                    Nörobilim ve minimalizmden ilham alarak tasarlandı.
+                  </p>
+                  
+                  <div className="divider" style={{ margin: '20px 0' }}></div>
+                  
+                  <div className="credits-section">
+                    <h3>Geliştirme</h3>
+                    <p>Designed & Built by <strong>Antigravity AI</strong></p>
+                    <p style={{ fontSize: '0.8rem', opacity: 0.6, marginTop: '5px' }}>© 2026 FocusZen. Tüm hakları saklıdır.</p>
                   </div>
                 </div>
               </div>
