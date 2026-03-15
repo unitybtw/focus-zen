@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Pause, RotateCcw, Check, Circle, ListTodo, BarChart3, Clock, Music, X, ChevronLeft, ChevronRight, Focus, Cloud, Wind, Maximize2, Minimize2, RefreshCw, Zap } from 'lucide-react';
+import { Play, Pause, RotateCcw, Check, Circle, ListTodo, BarChart3, Clock, Music, X, ChevronLeft, ChevronRight, Focus, Cloud, Wind, Maximize2, Minimize2, Zap, Tag, History } from 'lucide-react';
 import { Howl } from 'howler';
 import './index.css';
 
@@ -47,20 +47,16 @@ function App() {
   // Immersive Mode
   const [isImmersive, setIsImmersive] = useState(false);
 
-  // Zen Breathing Feature
-  const [breathingActive, setBreathingActive] = useState(false);
-  const [breathPhase, setBreathPhase] = useState('Nefes Al'); // Inhale, Hold, Exhale
+  // Focus History & Tags
+  const [sessionTag, setSessionTag] = useState('İş'); // İş, Eğitim, Yaratıcı, Kişisel
+  const [focusHistory, setFocusHistory] = useState([]);
   
-  useEffect(() => {
-    let breathInterval;
-    if (breathingActive) {
-      setBreathPhase('Nefes Al');
-      breathInterval = setInterval(() => {
-        setBreathPhase(prev => prev === 'Nefes Al' ? 'Nefes Ver' : 'Nefes Al');
-      }, 4000);
-    }
-    return () => clearInterval(breathInterval);
-  }, [breathingActive]);
+  const tags = [
+    { label: 'İş', icon: '💼', color: '#3b82f6' },
+    { label: 'Eğitim', icon: '🎓', color: '#10b981' },
+    { label: 'Yaratıcı', icon: '🎨', color: '#8b5cf6' },
+    { label: 'Kişisel', icon: '🧘', color: '#f43f5e' }
+  ];
 
   // Background Noise State (White Noise Synth)
   const [noisePlaying, setNoisePlaying] = useState(false);
@@ -242,6 +238,16 @@ function App() {
     if (!isBreak) {
       setTotalPomodoros(prev => prev + 1);
       gainXp(50); // 50 XP for focusing
+      
+      // Add to history
+      const newEntry = {
+        id: Date.now(),
+        tag: sessionTag,
+        duration: Math.floor(defaultTime / 60),
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      setFocusHistory([newEntry, ...focusHistory].slice(0, 5)); // Keep last 5
+
       setIsBreak(true);
       setTimeLeft(breakTime);
     } else {
@@ -491,24 +497,24 @@ function App() {
 
                 <div className="divider" style={{margin: '20px 0', width: '200px', opacity: 0.1}}></div>
 
-                {/* Zen Breathing Widget */}
-                {!breathingActive ? (
-                  <button className="zen-btn fade-in" onClick={() => setBreathingActive(true)}>
-                    <RefreshCw size={14} style={{marginRight: '8px'}} /> Zen Nefes Egzersizi
-                  </button>
-                ) : (
-                  <div className="breath-container slide-up">
-                    <div className="breath-status">{breathPhase}</div>
-                    <div className="breath-circle-outer">
-                      <div className={`breath-circle ${breathPhase === 'Nefes Al' ? 'inhale' : 'exhale'}`}></div>
-                    </div>
-                    <button className="nav-btn" onClick={() => setBreathingActive(false)}>Durdur</button>
-                  </div>
-                )}
+                {/* Session Tag Selector */}
+                <div className="tag-selector slide-up">
+                  {tags.map(t => (
+                    <button 
+                      key={t.label} 
+                      className={`tag-btn ${sessionTag === t.label ? 'active' : ''}`}
+                      onClick={() => !isRunning && setSessionTag(t.label)}
+                      style={{ '--tag-color': t.color }}
+                    >
+                      <span className="tag-icon">{t.icon}</span>
+                      <span className="tag-label">{t.label}</span>
+                    </button>
+                  ))}
+                </div>
 
                 {/* Pomodoro Session Tracker Feature */}
                 {totalPomodoros > 0 && (
-                  <div className="session-dots-container fade-in">
+                  <div className="session-dots-container fade-in" style={{ marginTop: '25px' }}>
                     {[...Array(Math.min(totalPomodoros, 10))].map((_, i) => (
                        <span key={i} className="session-dot filled" title="Tamamlanan Odak"></span>
                     ))}
@@ -558,7 +564,7 @@ function App() {
             {/* STATS TAB */}
             {activeTab === 'stats' && (
               <div className="stats-tab fade-in">
-                <h2>İstatistikler</h2>
+                <h2>Performans</h2>
                 
                 <div className="stats-grid">
                   <div className="stat-card">
@@ -568,8 +574,8 @@ function App() {
                   </div>
                   <div className="stat-card">
                     <h3>Odak</h3>
-                    <div className="stat-value">{totalPomodoros * 25}</div>
-                    <p className="stat-desc">Dakika</p>
+                    <div className="stat-value">{totalPomodoros}</div>
+                    <p className="stat-desc">Oturum</p>
                   </div>
                   <div className="stat-card">
                     <h3>Başarı</h3>
@@ -578,11 +584,28 @@ function App() {
                   </div>
                 </div>
 
-                <div className="radar-container" style={{background: 'rgba(255,255,255,0.02)'}}>
-                   <div style={{color: 'var(--text-muted)', textAlign: 'center', opacity: 0.6}}>
-                     Çalışma alışkanlıkları grafiği çok yakında eklenecek.
-                   </div>
-                </div>
+                {focusHistory.length > 0 && (
+                  <div className="history-section fade-in" style={{ marginTop: '30px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px', paddingLeft: '5px' }}>
+                      <History size={18} color="var(--accent-cyan)" />
+                      <h3 style={{ fontSize: '1rem', fontWeight: 600 }}>Son Aktivite</h3>
+                    </div>
+                    <div className="history-list" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      {focusHistory.map(entry => (
+                        <div key={entry.id} className="history-item slide-up">
+                          <div className="h-tag">
+                            <span>{tags.find(t => t.label === entry.tag)?.icon}</span>
+                            <span>{entry.tag}</span>
+                          </div>
+                          <div className="h-meta">
+                            <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{entry.duration} dk</span>
+                            <span style={{ color: 'var(--text-muted)' }}>{entry.time}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

@@ -230,23 +230,38 @@ body {
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes slideUp { from { opacity: 0; transform: translateY(40px) scale(0.95); filter: blur(15px); } to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); } }
 
-/* Breathing Exercise Widget */
-.breath-container {
-  margin-top: 30px; display: flex; flex-direction: column; align-items: center; gap: 20px;
-  padding: 30px; border-radius: 20px; background: rgba(59, 130, 246, 0.03);
-  border: 1px solid var(--glass-border); width: 100%; max-width: 400px;
+/* Session Tag Selector */
+.tag-selector {
+  display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+  margin-top: 10px; width: 100%; max-width: 450px;
 }
-.breath-circle-outer { width: 150px; height: 150px; display: flex; align-items: center; justify-content: center; }
-.breath-circle {
-  width: 40px; height: 40px; border-radius: 50%; 
-  background: var(--accent-cyan); box-shadow: 0 0 30px var(--accent-cyan-dim);
-  transition: all 4s ease-in-out;
+.tag-btn {
+  background: rgba(255, 255, 255, 0.03); border: 1px solid var(--glass-border);
+  border-radius: 12px; padding: 10px 15px; color: var(--text-muted);
+  cursor: pointer; display: flex; align-items: center; gap: 8px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.breath-circle.inhale { width: 140px; height: 140px; opacity: 0.8; }
-.breath-circle.exhale { width: 40px; height: 40px; opacity: 0.4; }
-.breath-status { font-size: 1rem; font-weight: 600; text-transform: uppercase; letter-spacing: 4px; color: var(--accent-cyan); height: 20px; }
-.zen-btn { background: transparent; border: 1px solid var(--accent-cyan); color: var(--accent-cyan); padding: 8px 16px; border-radius: 20px; font-size: 0.8rem; cursor: pointer; transition: 0.2s; }
-.zen-btn:hover { background: var(--accent-cyan-dim); }
+.tag-btn:hover { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.2); }
+.tag-btn.active { 
+  background: rgba(var(--tag-color-rgb), 0.1); 
+  border-color: var(--tag-color); 
+  color: var(--text-primary);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+.tag-btn.active .tag-icon { transform: scale(1.2); }
+.tag-label { font-size: 0.85rem; font-weight: 500; }
+
+/* History Section */
+.history-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 15px 20px; background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--glass-border); border-radius: 14px;
+  transition: transform 0.2s; cursor: default;
+}
+.history-item:hover { transform: translateX(5px); background: rgba(255, 255, 255, 0.04); }
+.h-tag { display: flex; align-items: center; gap: 10px; font-size: 0.95rem; font-weight: 500; }
+.h-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; font-size: 0.75rem; }
+
 
 /* 6. TIMER TAB (The "Cockpit") */
 .timer-tab { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; }
