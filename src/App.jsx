@@ -1,18 +1,49 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Play, Pause, RotateCcw, CheckCircle2, Circle, ListTodo, BarChart3, TerminalSquare, Music, Volume2, X } from 'lucide-react';
 import './index.css';
 
 function App() {
+  // Navigation
+  const [activeTab, setActiveTab] = useState('timer'); // timer, tasks, stats
+
+  // Gamification System
+  const [level, setLevel] = useState(1);
+  const [xp, setXp] = useState(0);
+  const [totalPomodoros, setTotalPomodoros] = useState(0);
+  const [tasksCompleted, setTasksCompleted] = useState(0);
+  const xpPerLevel = level * 100;
+
+  // Add XP
+  const gainXp = (amount) => {
+    let newXp = xp + amount;
+    if (newXp >= xpPerLevel) {
+      newXp = newXp - xpPerLevel;
+      setLevel(level + 1);
+      playLevelUpSound();
+    }
+    setXp(newXp);
+  };
+
+  // Timer State
+  const defaultTime = 25 * 60;
+  const breakTime = 5 * 60;
+  const [timeLeft, setTimeLeft] = useState(defaultTime);
+  const [isRunning, setIsRunning] = useState(false);
+  const [isBreak, setIsBreak] = useState(false);
+  
+  // Ambient Sound (Visualizer Simulation)
+  const [ambientPlaying, setAmbientPlaying] = useState(false);
+
+  // Tasks State
   const [tasks, setTasks] = useState([
-    { id: 1, text: "Günün en önemli görevini belirle", completed: false },
-    { id: 2, text: "FocusZen ile 1. Pomodoro Seansı", completed: false },
-    { id: 3, text: "GitHub deposunu oluştur", completed: false }
+    { id: 1, text: "Günün en önemli görevini tamamla", completed: false },
+    { id: 2, text: "React uygulamasını optimize et", completed: false }
   ]);
   const [inputValue, setInputValue] = useState("");
-  
-  // Timer State
-  const [timeLeft, setTimeLeft] = useState(25 * 60);
-  const [isRunning, setIsRunning] = useState(false);
-  
+
+  // Refs for audio (Using browser oscillator API for futuristic beep sounds)
+  const audioCtxRef = useRef(null);
+
   useEffect(() => {
     let interval;
     if (isRunning && timeLeft > 0) {
@@ -21,15 +52,75 @@ function App() {
       }, 1000);
     } else if (timeLeft === 0) {
       setIsRunning(false);
-      // Play a notification sound here in the future
+      handleSessionEnd();
     }
     return () => clearInterval(interval);
   }, [isRunning, timeLeft]);
 
+  const handleSessionEnd = () => {
+    playAlarmSound();
+    if (!isBreak) {
+      setTotalPomodoros(prev => prev + 1);
+      gainXp(50); // 50 XP for focusing
+      setIsBreak(true);
+      setTimeLeft(breakTime);
+    } else {
+      setIsBreak(false);
+      setTimeLeft(defaultTime);
+    }
+  };
+
+  // Sound Synthesizer (No external files needed)
+  const playAlarmSound = () => {
+    if (!audioCtxRef.current) audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
+    const ctx = audioCtxRef.current;
+    
+    // Cyberpunk synth beep
+    const osc = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+    
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(440, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.1);
+    
+    gainNode.gain.setValueAtTime(0, ctx.currentTime);
+    gainNode.gain.linearRampToValueAtTime(0.5, ctx.currentTime + 0.05);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+    
+    osc.connect(gainNode);
+    gainNode.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.5);
+  };
+
+  const playLevelUpSound = () => {
+    if (!audioCtxRef.current) audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
+    const ctx = audioCtxRef.current;
+    
+    const osc = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+    
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
+    osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1); // E5
+    osc.frequency.setValueAtTime(783.99, ctx.currentTime + 0.2); // G5
+    osc.frequency.setValueAtTime(1046.50, ctx.currentTime + 0.3); // C6
+    
+    gainNode.gain.setValueAtTime(0, ctx.currentTime);
+    gainNode.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.1);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.8);
+    
+    osc.connect(gainNode);
+    gainNode.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.8);
+  };
+
+  // Timer controls
   const toggleTimer = () => setIsRunning(!isRunning);
   const resetTimer = () => {
     setIsRunning(false);
-    setTimeLeft(25 * 60);
+    setTimeLeft(isBreak ? breakTime : defaultTime);
   };
 
   const formatTime = (seconds) => {
@@ -38,15 +129,27 @@ function App() {
     return `${m}:${s}`;
   };
 
+  // Task Controls
   const addTask = (e) => {
     if (e.key === 'Enter' && inputValue.trim()) {
-      setTasks([...tasks, { id: Date.now(), text: inputValue, completed: false }]);
+      setTasks([{ id: Date.now(), text: inputValue, completed: false }, ...tasks]);
       setInputValue("");
     }
   };
 
   const toggleTask = (id) => {
-    setTasks(tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
+    setTasks(tasks.map(t => {
+      if (t.id === id) {
+        if (!t.completed) {
+          gainXp(10); // 10 XP for tasks
+          setTasksCompleted(prev => prev + 1);
+        } else {
+          // If un-completing, optionally remove XP? We'll just keep it simple.
+        }
+        return { ...t, completed: !t.completed };
+      }
+      return t;
+    }));
   };
 
   const closeApp = () => {
@@ -59,63 +162,152 @@ function App() {
   };
 
   return (
-    <div className={`glass-container ${isRunning ? 'timer-running' : ''}`}>
-      <div className="drag-region"></div>
+    <div className={`app-wrapper ${isRunning ? 'is-focusing' : ''}`}>
+      {/* Background ambient lighting effects */}
+      <div className="ambient-blob blob-1"></div>
+      <div className="ambient-blob blob-2"></div>
       
-      <header className="app-header">
-        <h1><span>⚡</span> FocusZen</h1>
-        <div className="no-drag" style={{cursor: 'pointer', padding: '10px'}} onClick={closeApp}>
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M1 1L13 13M1 13L13 1" stroke="var(--text-secondary)" strokeWidth="2" strokeLinecap="round"/>
-          </svg>
-        </div>
-      </header>
-
-      <main className="app-content">
-        {/* Timer Panel */}
-        <section className="panel no-drag">
-          <h2>Pomodoro / Focus</h2>
-          <div className="timer-display">
-            {formatTime(timeLeft)}
-          </div>
-          <div className="btn-group">
-            <button className="btn primary" onClick={toggleTimer}>
-              {isRunning ? 'DURAKLAT' : 'BAŞLA'}
-            </button>
-            <button className="btn" onClick={resetTimer}>SIFIRLA</button>
+      <div className="glass-container">
+        {/* Electron Drag Region for Frameless Window */}
+        <div className="drag-region"></div>
+        
+        {/* Sidebar */}
+        <nav className="sidebar no-drag">
+          <div className="brand">
+            <div className="brand-icon">⚡</div>
           </div>
           
-          <div style={{marginTop: 'auto', textAlign: 'center', color: 'var(--text-secondary)'}}>
-            <p>Hedef: Kodlamaya 25 dakika kesintisiz odaklan.</p>
+          <div className="nav-items">
+            <button className={`nav-btn ${activeTab === 'timer' ? 'active' : ''}`} onClick={() => setActiveTab('timer')}>
+              <TerminalSquare size={20} />
+              <span>Odak</span>
+            </button>
+            <button className={`nav-btn ${activeTab === 'tasks' ? 'active' : ''}`} onClick={() => setActiveTab('tasks')}>
+              <ListTodo size={20} />
+              <span>Görevler</span>
+              <div className="task-badge">{tasks.filter(t => !t.completed).length}</div>
+            </button>
+            <button className={`nav-btn ${activeTab === 'stats' ? 'active' : ''}`} onClick={() => setActiveTab('stats')}>
+              <BarChart3 size={20} />
+              <span>İstatistikler</span>
+            </button>
           </div>
-        </section>
 
-        {/* Tasks Panel */}
-        <section className="panel no-drag">
-          <h2>Günlük Görevler</h2>
-          <input 
-            type="text" 
-            className="task-input" 
-            placeholder="Yeni görev ekle ve Enter'a bas..." 
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={addTask}
-          />
-          <ul className="task-list">
-            {tasks.map(task => (
-              <li key={task.id} className={`task-item ${task.completed ? 'completed' : ''}`}>
-                <input 
-                  type="checkbox" 
-                  className="task-checkbox" 
-                  checked={task.completed} 
-                  onChange={() => toggleTask(task.id)} 
-                />
-                <span className="task-text">{task.text}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      </main>
+          <div className="ambient-toggle" onClick={() => setAmbientPlaying(!ambientPlaying)}>
+            <div className={`visualizer ${ambientPlaying ? 'playing' : ''}`}>
+              <span></span><span></span><span></span><span></span>
+            </div>
+            <Music size={16} />
+            <span style={{fontSize: '0.8rem'}}>Lo-Fi</span>
+          </div>
+        </nav>
+
+        {/* Main Content Area */}
+        <main className="content-area">
+          {/* Header */}
+          <header className="header no-drag">
+            <div className="user-profile">
+              <div className="level-badge">LVL {level}</div>
+              <div className="xp-bar-container">
+                <div className="xp-bar" style={{width: `${(xp / xpPerLevel) * 100}%`}}></div>
+              </div>
+              <span className="xp-text">{xp}/{xpPerLevel} XP</span>
+            </div>
+            <button className="close-btn" onClick={closeApp}><X size={18} /></button>
+          </header>
+
+          <div className="tab-render no-drag fade-in">
+            {/* TIMER TAB */}
+            {activeTab === 'timer' && (
+              <div className="timer-tab">
+                <div className="status-label">
+                  <span className={`status-dot ${isBreak ? 'break' : 'focus'}`}></span>
+                  {isBreak ? 'Sistem Molası Aktif' : 'Derin Odaklanma Modu'}
+                </div>
+                
+                <div className="timer-circle">
+                  <div className="timer-text">{formatTime(timeLeft)}</div>
+                  {/* Cyberpunk rotating ring */}
+                  <div className={`timer-ring ${isRunning ? 'spin' : ''}`}></div>
+                </div>
+
+                <div className="controls">
+                  <button className="control-btn primary" onClick={toggleTimer}>
+                    {isRunning ? <Pause size={24} /> : <Play size={24} />}
+                  </button>
+                  <button className="control-btn secondary" onClick={resetTimer}>
+                    <RotateCcw size={20} />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* TASKS TAB */}
+            {activeTab === 'tasks' && (
+              <div className="tasks-tab slide-up">
+                <h2>Hedef Protokolü</h2>
+                <div className="input-group">
+                  <input 
+                    type="text" 
+                    placeholder="Görev tanımlayın ve izleyin (Enter↵)"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyDown={addTask}
+                  />
+                </div>
+                <div className="task-list">
+                  {tasks.map(task => (
+                    <div key={task.id} className={`task-card ${task.completed ? 'completed' : ''}`} onClick={() => toggleTask(task.id)}>
+                      <button className="check-btn">
+                         {task.completed ? <CheckCircle2 className="check-icon" /> : <Circle className="uncheck-icon" />}
+                      </button>
+                      <span className="task-text">{task.text}</span>
+                      {task.completed && <span className="xp-floating">+10 XP</span>}
+                    </div>
+                  ))}
+                  {tasks.length === 0 && (
+                    <div className="empty-state">
+                      <ListTodo size={40} opacity={0.3} />
+                      <p>Sistem boşta. Yeni görev atanmadı.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* STATS TAB */}
+            {activeTab === 'stats' && (
+              <div className="stats-tab fade-in">
+                <h2>Kullanıcı Raporu</h2>
+                
+                <div className="stats-grid">
+                  <div className="stat-card">
+                    <h3>Seviye</h3>
+                    <div className="stat-value highlight">{level}</div>
+                    <p className="stat-desc">Developer Sınıfı</p>
+                  </div>
+                  <div className="stat-card">
+                    <h3>Toplam Odak</h3>
+                    <div className="stat-value">{totalPomodoros * 25}</div>
+                    <p className="stat-desc">Dakika İşlendi</p>
+                  </div>
+                  <div className="stat-card">
+                    <h3>Görev İmhacı</h3>
+                    <div className="stat-value">{tasksCompleted}</div>
+                    <p className="stat-desc">Görev Tamamlandı</p>
+                  </div>
+                </div>
+
+                <div className="radar-container">
+                   <div style={{color: 'var(--text-secondary)', textAlign: 'center', marginTop: '20px'}}>
+                     Daha fazla istatistik ve metrik verisi Level {level + 2}'de açılacak.
+                   </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
