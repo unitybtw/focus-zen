@@ -603,3 +603,24 @@ body {
   display: flex; justify-content: center; margin-top: 10px;
   font-size: 0.7rem; color: var(--text-muted); font-weight: 500;
 }
+
+.data-actions {
+  display: flex; gap: 10px; margin-top: 15px;
+}
+
+.data-btn {
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;
+  background: rgba(255, 255, 255, 0.03); border: 1px solid var(--glass-border);
+  border-radius: 12px; padding: 12px; color: var(--text-primary);
+  font-size: 0.8rem; font-weight: 500; cursor: pointer; transition: all 0.2s;
+}
+
+.data-btn:hover { background: rgba(255, 255, 255, 0.08); transform: translateY(-2px); }
+
+.data-btn.export:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
+.data-btn.import:hover { border-color: var(--accent-purple); color: var(--accent-purple); }
+
+.settings-hint {
+  font-size: 0.7rem; color: var(--text-muted); margin-top: 10px;
+  text-align: center; font-style: italic;
+}

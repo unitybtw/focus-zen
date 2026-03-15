@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Pause, RotateCcw, Check, Circle, ListTodo, BarChart3, Clock, Music, X, ChevronLeft, ChevronRight, Focus, Cloud, Wind, Zap, Tag, History, Trophy, Target, TrendingUp, Settings as SettingsIcon, Settings2, Bell, Volume2, Flag, ChevronUp, ChevronDown, ListFilter, CloudRain, Trees } from 'lucide-react';
+import { Play, Pause, RotateCcw, Check, Circle, ListTodo, BarChart3, Clock, Music, X, ChevronLeft, ChevronRight, Focus, Cloud, Wind, Zap, Tag, History, Trophy, Target, TrendingUp, Settings as SettingsIcon, Settings2, Bell, Volume2, Flag, ChevronUp, ChevronDown, ListFilter, CloudRain, Trees, Download, Upload } from 'lucide-react';
 import { Howl } from 'howler';
 import './index.css';
 
@@ -430,6 +430,49 @@ function App() {
     }));
   };
 
+  // Data Portability [NEW]
+  const exportData = () => {
+    const data = {
+      level, xp, totalPomodoros, tasksCompleted, focusHistory, theme, 
+      focusDuration, shortBreakDuration, longBreakDuration, 
+      autoStartBreaks, autoStartFocus, sessionCount, tasks
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `focus-zen-backup-${new Date().toISOString().slice(0,10)}.json`;
+    link.click();
+  };
+
+  const importData = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const data = JSON.parse(event.target.result);
+        if (data.level) setLevel(data.level);
+        if (data.xp) setXp(data.xp);
+        if (data.totalPomodoros) setTotalPomodoros(data.totalPomodoros);
+        if (data.tasksCompleted) setTasksCompleted(data.tasksCompleted);
+        if (data.focusHistory) setFocusHistory(data.focusHistory);
+        if (data.theme) setTheme(data.theme);
+        if (data.focusDuration) setFocusDuration(data.focusDuration);
+        if (data.shortBreakDuration) setShortBreakDuration(data.shortBreakDuration);
+        if (data.longBreakDuration) setLongBreakDuration(data.longBreakDuration);
+        if (data.autoStartBreaks) setAutoStartBreaks(data.autoStartBreaks);
+        if (data.autoStartFocus) setAutoStartFocus(data.autoStartFocus);
+        if (data.sessionCount) setSessionCount(data.sessionCount);
+        if (data.tasks) setTasks(data.tasks);
+        alert('Veriler başarıyla içe aktarıldı!');
+      } catch {
+        alert('Hata: Geçersiz dosya formatı.');
+      }
+    };
+    reader.readAsText(file);
+  };
+
 
   return (
     <div className={`app-wrapper ${isRunning ? 'is-focusing' : ''}`}>
@@ -843,6 +886,27 @@ function App() {
                         {autoStartFocus ? 'Açık' : 'Kapalı'}
                       </button>
                     </div>
+                  </div>
+
+                  <div className="divider" style={{ margin: '20px 0' }}></div>
+
+                  <div className="settings-group">
+                    <div className="settings-header">
+                      <History size={18} color="var(--accent-cyan)" />
+                      <span>Veri Taşınabilirliği</span>
+                    </div>
+                    <div className="data-actions">
+                      <button className="data-btn export" onClick={exportData}>
+                        <Download size={16} />
+                        <span>Verileri Dışa Aktar</span>
+                      </button>
+                      <label className="data-btn import">
+                        <Upload size={16} />
+                        <span>Verileri İçe Aktar</span>
+                        <input type="file" accept=".json" onChange={importData} style={{ display: 'none' }} />
+                      </label>
+                    </div>
+                    <p className="settings-hint">İlerleyişinizi ve ayarlarınızı bir JSON dosyası olarak yedekleyin.</p>
                   </div>
                 </div>
               </div>
