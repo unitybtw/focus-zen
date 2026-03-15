@@ -135,7 +135,35 @@ function App() {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentTrackIndex]); // Re-run when track index changes
+  }, [currentTrackIndex]);
+
+  // Keyboard Shortcuts [NEW]
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Ignore if user is typing in an input
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+      switch(e.key.toLowerCase()) {
+        case ' ':
+          e.preventDefault();
+          setIsRunning(prev => !prev);
+          break;
+        case 'r':
+          setIsRunning(false);
+          // sessionCount used instead of nextSessionCount for reset logic alignment
+          setTimeLeft(isBreak ? (sessionCount % 4 === 0 ? longBreakDuration : shortBreakDuration) * 60 : focusDuration * 60);
+          break;
+        case '1': setActiveTab('timer'); break;
+        case '2': setActiveTab('tasks'); break;
+        case '3': setActiveTab('stats'); break;
+        case '4': setActiveTab('settings'); break;
+        default: break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isBreak, focusDuration, shortBreakDuration, longBreakDuration, sessionCount]);
 
   const toggleLofi = () => {
     if (!ambientPlaying) {
