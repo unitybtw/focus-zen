@@ -110,7 +110,10 @@ function App() {
     document.documentElement.setAttribute('data-theme', theme);
   }, [level, xp, totalPomodoros, tasksCompleted, focusHistory, theme, focusDuration, shortBreakDuration, longBreakDuration, autoStartBreaks, autoStartFocus, sessionCount]);
 
-  // Background Noise State (White Noise Synth)
+  /**
+   * Ambient Noise Engine (Web Audio API)
+   * Generates White, Rain, and Forest noise using real-time filters.
+   */
   const [noisePlaying, setNoisePlaying] = useState(false);
   const [noiseType, setNoiseType] = useState('white'); // white, rain, forest
   const [noiseVolume, setNoiseVolume] = useState(0.2);
@@ -195,6 +198,11 @@ function App() {
     }
   };
 
+  /**
+   * Toggles the synthesized noise machine.
+   * Uses BiquadFilterNode to create realistic Rain and Forest textures.
+   * @param {string} type - 'white', 'rain', or 'forest'
+   */
   const toggleNoise = (type = 'white') => {
     // If clicking same type while playing, stop it
     if (noisePlaying && noiseType === type) {
@@ -291,6 +299,10 @@ function App() {
   const audioCtxRef = useRef(null);
 
   // Sound Synthesizer (No external files needed) - Zen Bell
+  /**
+   * Plays a high-fidelity 'Zen Bowl' resonance using additive synthesis.
+   * Frequencies tuned to 432Hz and its harmonics.
+   */
   const playAlarmSound = () => {
     if (!audioCtxRef.current) audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
     const ctx = audioCtxRef.current;
@@ -318,6 +330,10 @@ function App() {
     });
   };
 
+  /**
+   * Handles logic for session transitions (Focus <-> Break).
+   * Orchestrates sound, notifications, history logging, and XP gain.
+   */
   const handleSessionEnd = () => {
     playAlarmSound();
 
