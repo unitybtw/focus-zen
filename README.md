@@ -1,16 +1,39 @@
-# React + Vite
+# ⚡ FocusZen
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+![FocusZen Concept](https://img.shields.io/badge/Status-Beta-brightgreen.svg)
+![License](https://img.shields.io/badge/License-MIT-blue.svg)
 
-Currently, two official plugins are available:
+> **FocusZen**, yazılımcılar ve derin odaklanma gerektiren işler yapanlar için özel olarak geliştirilmiş, estetik, "Glassmorphism" tasarımlı, şeffaf bir masaüstü yaşam portalıdır.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Electron ve React (Vite) kullanılarak tek bir pencerede fütüristik bir çalışma ortamı sunmak üzere tasarlanmıştır.
 
-## React Compiler
+## 🚀 Özellikler
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Pomodoro Sayacı:** Kesintisiz odaklanma seansları için karanlık mod sayacı. (25 dk odak, 5 dk mola).
+- **Akıllı Görevler (To-Do):** Günlük hedeflerinizi girebileceğiniz hızlı ve minimal not alma/görev paneli.
+- **Glassmorphic Arayüz:** Pencerelerin arkasındaki kodları veya duvar kağıdını hafifçe gösteren şık, şeffaf, çerçevesiz (borderless) Windows/Mac uyumlu UI.
+- **Oluşturulan Sistem Kaynakları Yönetimi:** Minimum RAM ve CPU tüketimi hedeflenerek Electron kullanılmış olmasına rağmen yüksek optimize amaçlı tasarlanmıştır.
 
-## Expanding the ESLint configuration
+## 🛠 Kurulum
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Bilgisayarında Node.js yüklü olması gerekmektedir. Projeyi bilgisayarına indirdikten sonra şu adımları izle:
+
+```bash
+# Bağımlılıkları Yükle
+npm install
+
+# Geliştirme Ortamını Başlat (Electron + Vite)
+npm run dev
+
+# Uygulamayı Paketle (Mac / Windows İçin Üret)
+npm run build
+```
+
+## ⌨️ Katkıda Bulunma (Contributing)
+
+Bu bir **Açık Kaynak** projesidir! FocusZen'e yeni özellikler (Örneğin: Müzik çalar, Notion entegrasyonu, Yapay Zeka özetleyici) eklemek için her zaman Pull Request (PR) gönderebilirsiniz. 
+
+Detaylı bilgi için lütfen [CONTRIBUTING.md](CONTRIBUTING.md) dosyasını okuyun.
+
+## 📄 Lisans
+Bu proje [MIT Lisansı](LICENSE) ile lisanslanmıştır. Dilediğiniz gibi kullanabilir, özelleştirebilir ve satabilirsiniz.
