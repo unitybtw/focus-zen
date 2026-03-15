@@ -259,28 +259,37 @@ function App() {
       new Notification("FocusZen", {
         body: isBreak ? "Mola sona erdi, yeniden odaklanma vakti!" : "Odak süren bitti, harika çalıştın. Biraz dinlen.",
         icon: "/icon.png",
-        silent: true // Custom synth plays instead of OS ping
+        silent: true
       });
     }
 
     if (!isBreak) {
+      const nextSessionCount = sessionCount + 1;
+      setSessionCount(nextSessionCount);
       setTotalPomodoros(prev => prev + 1);
-      gainXp(50); // 50 XP for focusing
+      gainXp(50);
       
-      // Add to history
       const newEntry = {
         id: Date.now(),
         tag: sessionTag,
-        duration: Math.floor(defaultTime / 60),
+        duration: focusDuration,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
-      setFocusHistory([newEntry, ...focusHistory].slice(0, 5)); // Keep last 5
+      setFocusHistory(prev => [newEntry, ...prev].slice(0, 5));
 
       setIsBreak(true);
-      setTimeLeft(breakTime);
+      const isLongBreak = nextSessionCount % 4 === 0;
+      const nextDuration = isLongBreak ? longBreakDuration : shortBreakDuration;
+      setTimeLeft(nextDuration * 60);
+      setDefaultTime(nextDuration * 60);
+      
+      if (autoStartBreaks) setIsRunning(true);
     } else {
       setIsBreak(false);
-      setTimeLeft(defaultTime);
+      setTimeLeft(focusDuration * 60);
+      setDefaultTime(focusDuration * 60);
+      
+      if (autoStartFocus) setIsRunning(true);
     }
   };
 
