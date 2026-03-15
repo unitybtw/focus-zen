@@ -59,6 +59,17 @@ function App() {
   const [inputValue, setInputValue] = useState('');
   const [inputPriority, setInputPriority] = useState('medium');
 
+  // UX Notifications [NEW]
+  const [notifications, setNotifications] = useState([]);
+
+  const addNotification = useCallback((message, type = 'success') => {
+    const id = Date.now();
+    setNotifications(prev => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    }, 3000);
+  }, []);
+
   // Ambient Sounds System
   const [ambientPlaying, setAmbientPlaying] = useState(false);
   const [selectedAmbient, setSelectedAmbient] = useState('lofi'); // lofi, white, rain, forest
@@ -150,6 +161,7 @@ function App() {
     
     if (type === 'focus') {
       setXp(prev => prev + 25);
+      addNotification('Odak seansı tamamlandı! +25 XP', 'success');
       setTotalPomodoros(prev => {
         const newVal = prev + 1;
         localStorage.setItem('totalPomodoros', newVal);
@@ -268,12 +280,12 @@ function App() {
     });
   }, [volume]);
 
-  // HANDLERS
   const addTask = (e) => {
     if (e.key === 'Enter' && inputValue.trim()) {
       const newTask = { id: Date.now(), text: inputValue, completed: false, priority: inputPriority, xpClaimed: false };
       setTasks(prev => [newTask, ...prev]);
       setInputValue('');
+      addNotification('Görev eklendi', 'success');
     }
   };
 
@@ -283,6 +295,7 @@ function App() {
         if (!t.completed) {
           setXp(x => x + 10);
           setTasksCompleted(c => c + 1);
+          addNotification('Görev tamamlandı! +10 XP', 'success');
           return { ...t, completed: true, xpClaimed: true };
         }
         return { ...t, completed: !t.completed };
@@ -373,6 +386,16 @@ function App() {
 
   return (
     <div className={`app-wrapper ${isRunning ? 'is-focusing' : ''} ${isZen ? 'zen-mode' : ''}`}>
+      {/* Floating Notifications Hub */}
+      <div className="notifications-hub">
+        {notifications.map(n => (
+          <div key={n.id} className={`notification-toast ${n.type} fade-blur-in`}>
+            {n.type === 'success' ? <Check size={16} /> : <Info size={16} />}
+            <span>{n.message}</span>
+          </div>
+        ))}
+      </div>
+
       <div className="ambient-blob blob-1"></div>
       <div className="ambient-blob blob-2"></div>
       
