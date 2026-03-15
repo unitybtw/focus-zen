@@ -329,9 +329,12 @@ function App() {
         id: Date.now(),
         tag: sessionTag,
         duration: focusDuration,
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        date: new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' }),
+        day: new Date().toLocaleDateString('tr-TR', { weekday: 'short' }),
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        tasksCompleted: tasks.filter(t => t.completed).length
       };
-      setFocusHistory(prev => [newEntry, ...prev].slice(0, 5));
+      setFocusHistory(prev => [newEntry, ...prev].slice(0, 10)); // Increased to 10 entries
 
       setIsBreak(true);
       const isLongBreak = nextSessionCount % 4 === 0;
@@ -820,13 +823,27 @@ function App() {
                     <div className="history-list" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                       {focusHistory.map(entry => (
                         <div key={entry.id} className="history-item slide-up">
-                          <div className="h-tag">
-                            <span>{tags.find(t => t.label === entry.tag)?.icon}</span>
-                            <span>{entry.tag}</span>
+                          <div className="h-left">
+                            <div className="h-date-box">
+                              <span className="h-day">{entry.day || '...'}</span>
+                              <span className="h-date">{entry.date || '...'}</span>
+                            </div>
+                            <div className="h-tag">
+                              <span>{tags.find(t => t.label === entry.tag)?.icon}</span>
+                              <span>{entry.tag}</span>
+                            </div>
                           </div>
-                          <div className="h-meta">
-                            <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{entry.duration} dk</span>
-                            <span style={{ color: 'var(--text-muted)' }}>{entry.time}</span>
+                          <div className="h-right">
+                            <div className="h-meta">
+                              <span className="h-duration">{entry.duration} dk</span>
+                              <span className="h-time">{entry.time}</span>
+                            </div>
+                            {entry.tasksCompleted > 0 && (
+                              <div className="h-badge" title="Tamamlanan Görevler">
+                                <Check size={10} />
+                                <span>{entry.tasksCompleted}</span>
+                              </div>
+                            )}
                           </div>
                         </div>
                       ))}
