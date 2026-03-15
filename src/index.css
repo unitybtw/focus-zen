@@ -135,7 +135,17 @@ body {
 
 .brand { margin-bottom: 40px; }
 .brand-icon {
-  font-size: 1.5rem; text-shadow: 0 0 20px var(--accent-cyan); opacity: 0.9;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.brand-icon:hover { transform: scale(1.1); }
+.elite-glow {
+  filter: drop-shadow(0 0 8px rgba(0, 242, 255, 0.4));
+  animation: elitePulse 4s infinite alternate;
+}
+@keyframes elitePulse {
+  0% { filter: drop-shadow(0 0 5px rgba(0, 242, 255, 0.3)); }
+  100% { filter: drop-shadow(0 0 15px rgba(0, 242, 255, 0.6)); }
 }
 
 .nav-items {

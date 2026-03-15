@@ -523,7 +523,9 @@ function App() {
         {/* Sidebar: Primary Navigation and Daily Goal Progress */}
         <nav className="sidebar no-drag">
           <div className="brand">
-            <div className="brand-icon"><Focus size={28} color="var(--accent-cyan)" /></div>
+            <div className="brand-icon elite-glow">
+              <img src="/assets/icon-elite.png" alt="FocusZen Elite" style={{ width: '32px', height: '32px', borderRadius: '8px' }} />
+            </div>
           </div>
           
           <div className="nav-items">
