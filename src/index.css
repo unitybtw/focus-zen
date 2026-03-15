@@ -851,6 +851,23 @@ body {
   100% { opacity: 1; filter: blur(0); transform: scale(1); }
 }
 
+/* 7. QUOTE ENGINE [NEW] */
+.quote-container {
+  margin-top: 40px;
+  max-width: 400px;
+  text-align: center;
+  padding: 0 20px;
+}
+
+.zen-quote {
+  font-size: 0.95rem;
+  font-style: italic;
+  font-weight: 500;
+  color: var(--text-muted);
+  line-height: 1.6;
+  opacity: 0.8;
+}
+
 /* 8. MINI-TRAY CONTROLLER [NEW] */
 .mini-tray-controller {
   position: fixed;

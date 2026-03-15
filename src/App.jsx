@@ -89,6 +89,49 @@ function App() {
     }
   }[lang];
 
+  // Quote Engine 2.0 [NEW]
+  const quotes = {
+    tr: {
+      focus: [
+        "Sessizlikte derin odak yatar.",
+        "Sadece şu ana odaklan.",
+        "Zihin sakinliği, gücün anahtarıdır.",
+        "Bir seferde tek bir adım.",
+        "Disiplin özgürlüktür."
+      ],
+      break: [
+        "Zihnini dinlendir, ruhun canlansın.",
+        "Derin bir nefes al.",
+        "Mola, yolculuğun bir parçasıdır.",
+        "Sakinlikte güç vardır.",
+        "Yavaşla ve anın tadını çıkar."
+      ]
+    },
+    en: {
+      focus: [
+        "Deep focus lies in silence.",
+        "Focus only on the now.",
+        "Calm mind is the key to power.",
+        "One step at a time.",
+        "Discipline is freedom."
+      ],
+      break: [
+        "Rest your mind, let your soul revive.",
+        "Take a deep breath.",
+        "Break is a part of the journey.",
+        "There is strength in stillness.",
+        "Slow down and enjoy the moment."
+      ]
+    }
+  };
+
+  const [currentQuote, setCurrentQuote] = useState("");
+  
+  useEffect(() => {
+    const pool = quotes[lang][type === 'focus' ? 'focus' : 'break'];
+    setCurrentQuote(pool[Math.floor(Math.random() * pool.length)]);
+  }, [type, lang]);
+
   // System Tray Simulation [NEW]
   const [trayOpen, setTrayOpen] = useState(false);
 
@@ -574,6 +617,10 @@ function App() {
                   <button className="ctrl-btn secondary" onClick={resetTimer} title={t.reset}><RotateCcw size={22} /></button>
                   <button className="ctrl-btn primary" onClick={() => setIsRunning(!isRunning)}>{isRunning ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" style={{ marginLeft: '4px' }} />}</button>
                   <button className="ctrl-btn secondary" onClick={handleTimerComplete} title={t.skip}><Check size={22} /></button>
+                </div>
+                {/* Quote Display [NEW] */}
+                <div className="quote-container fade-blur-in">
+                  <p className="zen-quote">"{currentQuote}"</p>
                 </div>
               </div>
             )}
