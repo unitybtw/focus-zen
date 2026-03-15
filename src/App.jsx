@@ -294,12 +294,12 @@ function App() {
           </div>
 
           <div className="ambient-toggle">
-            <div style={{display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', marginBottom: ambientPlaying ? '10px' : '0'}} onClick={toggleLofi}>
+            <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', cursor: 'pointer', paddingBottom: '10px'}} onClick={toggleLofi}>
               <div className={`visualizer ${ambientPlaying ? 'playing' : ''}`}>
                 <span></span><span></span><span></span><span></span>
               </div>
-              <Music size={16} />
-              <span style={{fontSize: '0.8rem'}}>Lo-Fi</span>
+              <Music size={20} />
+              <span style={{fontSize: '0.75rem', fontWeight: 500}}>Lo-Fi</span>
             </div>
             
             {ambientPlaying && (
@@ -370,6 +370,15 @@ function App() {
                 <div className="quote-container">
                    <p>"{currentQuote}"</p>
                 </div>
+
+                {/* Pomodoro Session Tracker Feature */}
+                {totalPomodoros > 0 && (
+                  <div className="session-dots-container fade-in">
+                    {[...Array(Math.min(totalPomodoros, 10))].map((_, i) => (
+                       <span key={i} className="session-dot filled" title="Tamamlanan Odak"></span>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
