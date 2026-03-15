@@ -15,10 +15,13 @@
 
   --font-mono: 'SF Mono', 'Fira Code', monospace;
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 * {
   margin: 0; padding: 0; box-sizing: border-box;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 body {
@@ -137,10 +140,16 @@ body {
 .visualizer span { width: 3px; background: var(--text-muted); border-radius: 1px; transition: height 0.1s; }
 .visualizer.playing { opacity: 1; }
 .visualizer.playing span { background: var(--accent-cyan); animation: equalize 1s infinite alternate; }
-.visualizer.playing span:nth-child(1) { animation-delay: 0.1s; }
-.visualizer.playing span:nth-child(2) { animation-delay: 0.3s; }
-.visualizer.playing span:nth-child(3) { animation-delay: 0.2s; }
 .visualizer.playing span:nth-child(4) { animation-delay: 0.4s; }
+
+/* Micro-interaction for Nav Buttons */
+.nav-btn::after {
+  content: ''; position: absolute; width: 100%; height: 100%;
+  background: var(--accent-cyan); border-radius: inherit;
+  opacity: 0; transform: scale(0.5); transition: 0.3s; z-index: -1;
+}
+.nav-btn:hover::after { opacity: 0.1; transform: scale(1.1); }
+.nav-btn.active::after { opacity: 0.2; transform: scale(1); }
 
 @keyframes equalize { 0% { height: 2px; } 100% { height: 12px; } }
 
@@ -202,16 +211,42 @@ body {
 .xp-bar { height: 100%; background: var(--accent-cyan); transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 0 5px var(--accent-cyan); }
 .xp-text { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted); width: 45px; text-align: right; }
 
-.close-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; display: flex; transition: color 0.2s; }
 .close-btn:hover { color: var(--accent-magenta); }
 
-.tab-render { flex: 1; padding: 20px 40px; display: flex; flex-direction: column; }
+.streak-badge {
+  display: flex; align-items: center; gap: 6px; 
+  background: rgba(255, 170, 0, 0.1); color: #ffaa00; 
+  padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(255,170,0,0.2);
+  font-size: 0.75rem; font-weight: 700; margin-right: 15px;
+  animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.tab-render { flex: 1; padding: 20px 40px; display: flex; flex-direction: column; overflow: hidden; }
 
 /* 5. TAB ANIMATIONS */
-.fade-in { animation: fadeIn 0.4s ease forwards; }
-.slide-up { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.fade-in { animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.slide-up { animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes slideUp { from { opacity: 0; transform: translateY(20px); filter: blur(5px); } to { opacity: 1; transform: translateY(0); filter: blur(0); } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(40px) scale(0.95); filter: blur(15px); } to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); } }
+
+/* Breathing Exercise Widget */
+.breath-container {
+  margin-top: 30px; display: flex; flex-direction: column; align-items: center; gap: 20px;
+  padding: 30px; border-radius: 20px; background: rgba(59, 130, 246, 0.03);
+  border: 1px solid var(--glass-border); width: 100%; max-width: 400px;
+}
+.breath-circle-outer { width: 150px; height: 150px; display: flex; align-items: center; justify-content: center; }
+.breath-circle {
+  width: 40px; height: 40px; border-radius: 50%; 
+  background: var(--accent-cyan); box-shadow: 0 0 30px var(--accent-cyan-dim);
+  transition: all 4s ease-in-out;
+}
+.breath-circle.inhale { width: 140px; height: 140px; opacity: 0.8; }
+.breath-circle.exhale { width: 40px; height: 40px; opacity: 0.4; }
+.breath-status { font-size: 1rem; font-weight: 600; text-transform: uppercase; letter-spacing: 4px; color: var(--accent-cyan); height: 20px; }
+.zen-btn { background: transparent; border: 1px solid var(--accent-cyan); color: var(--accent-cyan); padding: 8px 16px; border-radius: 20px; font-size: 0.8rem; cursor: pointer; transition: 0.2s; }
+.zen-btn:hover { background: var(--accent-cyan-dim); }
 
 /* 6. TIMER TAB (The "Cockpit") */
 .timer-tab { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; }
@@ -306,12 +341,20 @@ body {
 .task-list::-webkit-scrollbar { width: 6px; }
 .task-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
 
+/* Staggered Task Entry */
 .task-card {
   display: flex; align-items: center; gap: 15px; padding: 16px 20px; background: rgba(255, 255, 255, 0.02);
   border: 1px solid transparent; border-radius: 12px; cursor: pointer; position: relative; overflow: hidden;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.task-card:hover { background: rgba(255, 255, 255, 0.05); border-color: var(--glass-border); transform: translateX(5px); }
+.task-card:hover { background: rgba(255, 255, 255, 0.05); border-color: var(--glass-border); transform: translateX(8px); box-shadow: -10px 0 30px rgba(59, 130, 246, 0.05); }
+
+.task-list { perspective: 1000px; }
+.task-card { animation: entrySlideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+@keyframes entrySlideIn {
+  from { opacity: 0; transform: rotateX(-30deg) translateY(20px); }
+  to { opacity: 1; transform: rotateX(0) translateY(0); }
+}
 
 .check-btn { background: transparent; border: none; display: flex; color: var(--text-muted); cursor: pointer; transition: color 0.2s; }
 .task-card:hover .uncheck-icon { color: var(--text-primary); }
@@ -338,8 +381,12 @@ body {
 .stat-card {
   background: rgba(255, 255, 255, 0.03); border: 1px solid var(--glass-border); border-radius: 15px;
   padding: 30px 20px; display: flex; flex-direction: column; align-items: center; position: relative;
-  overflow: hidden;
+  overflow: hidden; transition: 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
+.stat-card:nth-child(2) { animation-delay: 0.1s; }
+.stat-card:nth-child(3) { animation-delay: 0.2s; }
+.stat-card:hover { transform: translateY(-5px); background: rgba(59, 130, 246, 0.05); border-color: var(--accent-cyan-dim); }
 .stat-card h3 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 15px; text-align: center;}
 .stat-value { font-size: 3rem; font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums;}
 .stat-value.highlight { color: var(--accent-cyan); text-shadow: 0 0 20px var(--accent-cyan-dim); }

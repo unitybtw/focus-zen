@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Pause, RotateCcw, Check, Circle, ListTodo, BarChart3, Clock, Music, X, ChevronLeft, ChevronRight, Focus, Cloud, Wind, Maximize2, Minimize2 } from 'lucide-react';
+import { Play, Pause, RotateCcw, Check, Circle, ListTodo, BarChart3, Clock, Music, X, ChevronLeft, ChevronRight, Focus, Cloud, Wind, Maximize2, Minimize2, RefreshCw, Zap } from 'lucide-react';
 import { Howl } from 'howler';
 import './index.css';
 
@@ -46,6 +46,21 @@ function App() {
 
   // Immersive Mode
   const [isImmersive, setIsImmersive] = useState(false);
+
+  // Zen Breathing Feature
+  const [breathingActive, setBreathingActive] = useState(false);
+  const [breathPhase, setBreathPhase] = useState('Nefes Al'); // Inhale, Hold, Exhale
+  
+  useEffect(() => {
+    let breathInterval;
+    if (breathingActive) {
+      setBreathPhase('Nefes Al');
+      breathInterval = setInterval(() => {
+        setBreathPhase(prev => prev === 'Nefes Al' ? 'Nefes Ver' : 'Nefes Al');
+      }, 4000);
+    }
+    return () => clearInterval(breathInterval);
+  }, [breathingActive]);
 
   // Background Noise State (White Noise Synth)
   const [noisePlaying, setNoisePlaying] = useState(false);
@@ -418,6 +433,12 @@ function App() {
           {/* Header */}
           <header className="header no-drag">
             <div className="header-spacers"></div>
+            
+            <div className="streak-badge" title="Günlük Odak Serisi">
+              <Zap size={14} fill="currentColor" />
+              <span>3 Gün</span>
+            </div>
+
             <div className="user-profile">
               <div className="level-badge">LVL {level}</div>
               <div className="xp-bar-container">
@@ -468,6 +489,23 @@ function App() {
                    <p>"{currentQuote}"</p>
                 </div>
 
+                <div className="divider" style={{margin: '20px 0', width: '200px', opacity: 0.1}}></div>
+
+                {/* Zen Breathing Widget */}
+                {!breathingActive ? (
+                  <button className="zen-btn fade-in" onClick={() => setBreathingActive(true)}>
+                    <RefreshCw size={14} style={{marginRight: '8px'}} /> Zen Nefes Egzersizi
+                  </button>
+                ) : (
+                  <div className="breath-container slide-up">
+                    <div className="breath-status">{breathPhase}</div>
+                    <div className="breath-circle-outer">
+                      <div className={`breath-circle ${breathPhase === 'Nefes Al' ? 'inhale' : 'exhale'}`}></div>
+                    </div>
+                    <button className="nav-btn" onClick={() => setBreathingActive(false)}>Durdur</button>
+                  </div>
+                )}
+
                 {/* Pomodoro Session Tracker Feature */}
                 {totalPomodoros > 0 && (
                   <div className="session-dots-container fade-in">
@@ -493,8 +531,13 @@ function App() {
                   />
                 </div>
                 <div className="task-list">
-                  {tasks.map(task => (
-                    <div key={task.id} className={`task-card ${task.completed ? 'completed' : ''}`} onClick={() => toggleTask(task.id)}>
+                  {tasks.map((task, index) => (
+                    <div 
+                      key={task.id} 
+                      className={`task-card ${task.completed ? 'completed' : ''}`} 
+                      onClick={() => toggleTask(task.id)}
+                      style={{ animationDelay: `${index * 0.05}s` }}
+                    >
                       <button className="check-btn">
                          {task.completed ? <Check className="check-icon" size={18} /> : <Circle className="uncheck-icon" size={18} />}
                       </button>
