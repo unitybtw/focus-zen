@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Pause, RotateCcw, Check, Circle, ListTodo, BarChart3, Clock, Music, X, ChevronLeft, ChevronRight, Focus, Cloud, Wind, Zap, Tag, History, Trophy, Target, TrendingUp } from 'lucide-react';
+import { Play, Pause, RotateCcw, Check, Circle, ListTodo, BarChart3, Clock, Music, X, ChevronLeft, ChevronRight, Focus, Cloud, Wind, Zap, Tag, History, Trophy, Target, TrendingUp, Settings as SettingsIcon, Settings2, Bell, Volume2 } from 'lucide-react';
 import { Howl } from 'howler';
 import './index.css';
 
@@ -12,8 +12,16 @@ function App() {
   const [xp, setXp] = useState(0);
   const [totalPomodoros, setTotalPomodoros] = useState(0);
   const [tasksCompleted, setTasksCompleted] = useState(0);
+  const [sessionCount, setSessionCount] = useState(0); // For Long Break logic
   const [dailyGoal] = useState(4);
   const xpPerLevel = level * 100;
+
+  // Timer Settings State
+  const [focusDuration, setFocusDuration] = useState(25);
+  const [shortBreakDuration, setShortBreakDuration] = useState(5);
+  const [longBreakDuration, setLongBreakDuration] = useState(15);
+  const [autoStartBreaks, setAutoStartBreaks] = useState(false);
+  const [autoStartFocus, setAutoStartFocus] = useState(false);
 
   // Add XP
   const gainXp = (amount) => {
@@ -67,15 +75,29 @@ function App() {
       setTasksCompleted(data.tasksCompleted || 0);
       setFocusHistory(data.focusHistory || []);
       setTheme(data.theme || 'midnight');
+      if (data.focusDuration) {
+        setFocusDuration(data.focusDuration);
+        setDefaultTime(data.focusDuration * 60);
+        setTimeLeft(data.focusDuration * 60);
+      }
+      if (data.shortBreakDuration) setShortBreakDuration(data.shortBreakDuration);
+      if (data.longBreakDuration) setLongBreakDuration(data.longBreakDuration);
+      if (data.autoStartBreaks) setAutoStartBreaks(data.autoStartBreaks);
+      if (data.autoStartFocus) setAutoStartFocus(data.autoStartFocus);
+      if (data.sessionCount) setSessionCount(data.sessionCount);
     }
   }, []);
 
   // Persistence: Save on change
   useEffect(() => {
-    const data = { level, xp, totalPomodoros, tasksCompleted, focusHistory, theme };
+    const data = { 
+      level, xp, totalPomodoros, tasksCompleted, focusHistory, theme,
+      focusDuration, shortBreakDuration, longBreakDuration, 
+      autoStartBreaks, autoStartFocus, sessionCount
+    };
     localStorage.setItem('focusZen_progress', JSON.stringify(data));
     document.documentElement.setAttribute('data-theme', theme);
-  }, [level, xp, totalPomodoros, tasksCompleted, focusHistory, theme]);
+  }, [level, xp, totalPomodoros, tasksCompleted, focusHistory, theme, focusDuration, shortBreakDuration, longBreakDuration, autoStartBreaks, autoStartFocus, sessionCount]);
 
   // Background Noise State (White Noise Synth)
   const [noisePlaying, setNoisePlaying] = useState(false);
@@ -374,7 +396,11 @@ function App() {
             </button>
             <button className={`nav-btn ${activeTab === 'stats' ? 'active' : ''}`} onClick={() => setActiveTab('stats')}>
               <BarChart3 size={20} />
-              <span>İstatistik</span>
+              <span>Performans</span>
+            </button>
+            <button className={`nav-btn ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>
+              <Settings2 size={20} />
+              <span>Ayarlar</span>
             </button>
           </div>
 
@@ -579,54 +605,58 @@ function App() {
               </div>
             )}
 
-            {/* STATS TAB */}
-            {activeTab === 'stats' && (
-              <div className="stats-tab fade-in">
-                <h2>Performans</h2>
+            {/* SETTINGS TAB [NEW] */}
+            {activeTab === 'settings' && (
+              <div className="settings-tab slide-up" style={{ maxWidth: '500px', margin: '0 auto', width: '100%' }}>
+                <h2>Uygulama Ayarları</h2>
                 
-                <div className="stats-grid">
-                  <div className="stat-card">
-                    <div className="stat-icon-wrapper"><Trophy size={18} /></div>
-                    <h3>Gelişim</h3>
-                    <div className="stat-value highlight">{level}</div>
-                    <p className="stat-desc">Mevcut Seviye</p>
+                <div className="settings-card">
+                  <div className="settings-group">
+                    <div className="settings-header">
+                      <Clock size={18} color="var(--accent-cyan)" />
+                      <span>Süre Ayarları (Dakika)</span>
+                    </div>
+                    <div className="settings-inputs">
+                      <div className="input-field">
+                        <label>Odak</label>
+                        <input type="number" value={focusDuration} onChange={(e) => {
+                          const val = parseInt(e.target.value) || 1;
+                          setFocusDuration(val);
+                          if (!isRunning) { setDefaultTime(val * 60); setTimeLeft(val * 60); }
+                        }} />
+                      </div>
+                      <div className="input-field">
+                        <label>Kısa Mola</label>
+                        <input type="number" value={shortBreakDuration} onChange={(e) => setShortBreakDuration(parseInt(e.target.value) || 1)} />
+                      </div>
+                      <div className="input-field">
+                        <label>Uzun Mola</label>
+                        <input type="number" value={longBreakDuration} onChange={(e) => setLongBreakDuration(parseInt(e.target.value) || 1)} />
+                      </div>
+                    </div>
                   </div>
-                  <div className="stat-card">
-                    <div className="stat-icon-wrapper"><Target size={18} /></div>
-                    <h3>Odak</h3>
-                    <div className="stat-value">{totalPomodoros}</div>
-                    <p className="stat-desc">Oturum</p>
-                  </div>
-                  <div className="stat-card">
-                    <div className="stat-icon-wrapper"><TrendingUp size={18} /></div>
-                    <h3>Başarı</h3>
-                    <div className="stat-value">{tasksCompleted}</div>
-                    <p className="stat-desc">Görev Tamamlandı</p>
+
+                  <div className="divider" style={{ margin: '20px 0' }}></div>
+
+                  <div className="settings-group">
+                    <div className="settings-header">
+                      <Bell size={18} color="var(--accent-cyan)" />
+                      <span>Otomasyon</span>
+                    </div>
+                    <div className="settings-toggle">
+                      <span>Molayı Otomatik Başlat</span>
+                      <button className={`toggle-pill ${autoStartBreaks ? 'active' : ''}`} onClick={() => setAutoStartBreaks(!autoStartBreaks)}>
+                        {autoStartBreaks ? 'Açık' : 'Kapalı'}
+                      </button>
+                    </div>
+                    <div className="settings-toggle">
+                      <span>Odağı Otomatik Başlat</span>
+                      <button className={`toggle-pill ${autoStartFocus ? 'active' : ''}`} onClick={() => setAutoStartFocus(!autoStartFocus)}>
+                        {autoStartFocus ? 'Açık' : 'Kapalı'}
+                      </button>
+                    </div>
                   </div>
                 </div>
-
-                {focusHistory.length > 0 && (
-                  <div className="history-section fade-in" style={{ marginTop: '30px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px', paddingLeft: '5px' }}>
-                      <History size={18} color="var(--accent-cyan)" />
-                      <h3 style={{ fontSize: '1rem', fontWeight: 600 }}>Son Aktivite</h3>
-                    </div>
-                    <div className="history-list" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      {focusHistory.map(entry => (
-                        <div key={entry.id} className="history-item slide-up">
-                          <div className="h-tag">
-                            <span>{tags.find(t => t.label === entry.tag)?.icon}</span>
-                            <span>{entry.tag}</span>
-                          </div>
-                          <div className="h-meta">
-                            <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{entry.duration} dk</span>
-                            <span style={{ color: 'var(--text-muted)' }}>{entry.time}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
             )}
           </div>

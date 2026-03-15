@@ -462,3 +462,59 @@ body {
   border-radius: 12px; border: 1px solid var(--glass-border);
   display: flex; justify-content: center; align-items: center;
 }
+
+/* Settings Tab Professional UI */
+.settings-tab h2 { margin-bottom: 30px; }
+
+.settings-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: var(--glass-shadow);
+  animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.settings-group {
+  display: flex; flex-direction: column; gap: 20px;
+}
+
+.settings-header {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 0.9rem; font-weight: 600; color: var(--text-primary);
+  margin-bottom: 5px;
+}
+
+.settings-inputs {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;
+}
+
+.input-field {
+  display: flex; flex-direction: column; gap: 8px;
+}
+
+.input-field label {
+  font-size: 0.75rem; color: var(--text-muted); font-weight: 500;
+}
+
+.input-field input {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  padding: 10px;
+  color: white;
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  width: 100%;
+  transition: 0.2s;
+}
+
+.input-field input:focus {
+  outline: none; border-color: var(--accent-cyan);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.settings-toggle {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 0.85rem; color: var(--text-primary);
+}
