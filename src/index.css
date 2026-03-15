@@ -537,16 +537,30 @@ body {
 
 /* 7. TASKS TAB */
 .tasks-tab h2, .stats-tab h2 { font-size: 1.5rem; font-weight: 600; margin-bottom: 30px; letter-spacing: -0.5px; }
+.tasks-tab {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 0 20px;
+  height: 100%;
+}
+.tasks-header { margin-bottom: 20px; }
 
+/* Alias for JSX compatibility */
+.input-glass,
 .task-input-wrapper {
   display: flex; align-items: center; gap: 15px; width: 100%; margin-bottom: 25px;
-  background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border);
-  border-radius: 14px; padding: 5px 15px; transition: 0.3s;
+  background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border);
+  border-radius: 14px; padding: 8px 15px; transition: 0.3s;
 }
+.input-glass:focus-within,
 .task-input-wrapper:focus-within {
-  border-color: var(--accent-cyan); box-shadow: 0 0 20px var(--accent-cyan-dim);
-  background: rgba(255,255,255,0.05);
+  border-color: var(--accent-cyan); box-shadow: 0 0 20px rgba(0, 242, 255, 0.15);
+  background: rgba(255,255,255,0.06);
 }
+.input-glass input,
 .task-input-wrapper input {
   flex: 1; background: transparent !important; border: none !important; padding: 10px 0 !important;
   color: white !important; font-size: 1rem !important; outline: none !important; margin-bottom: 0 !important;

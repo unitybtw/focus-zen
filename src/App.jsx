@@ -588,27 +588,65 @@ function App() {
             </header>
             {activeTab === 'timer' && (
               <div className="timer-tab">
-                <div className="timer-display-container">
-                  <div className={`timer-ring ${type}`}>
-                    <svg viewBox="0 0 100 100">
-                      <circle className="ring-bg" cx="50" cy="50" r="45" />
-                      <circle className="ring-progress" cx="50" cy="50" r="45" style={{ strokeDasharray: 283, strokeDashoffset: 283 - (timeLeft / defaultTime) * 283 }} />
-                    </svg>
-                    <div className="timer-content">
-                      <span className="timer-type">{type === 'focus' ? t.focus : t.break}</span>
-                      <span className="timer-clock">{Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}</span>
-                    </div>
+                <div className="timer-circle">
+                  <div className={`timer-ring ${isRunning ? 'spin' : ''}`} />
+                  <svg
+                    viewBox="0 0 100 100"
+                    style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', transform: 'rotate(-90deg)' }}
+                  >
+                    <circle
+                      className="ring-bg"
+                      cx="50" cy="50" r="45"
+                      fill="none"
+                      stroke="rgba(255,255,255,0.05)"
+                      strokeWidth="3"
+                    />
+                    <circle
+                      className="ring-progress"
+                      cx="50" cy="50" r="45"
+                      fill="none"
+                      stroke="var(--accent-cyan)"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      style={{
+                        strokeDasharray: 283,
+                        strokeDashoffset: 283 - (timeLeft / defaultTime) * 283,
+                        filter: 'drop-shadow(0 0 8px var(--accent-cyan))',
+                        transition: 'stroke-dashoffset 1s linear'
+                      }}
+                    />
+                  </svg>
+                  <div style={{ position: 'relative', zIndex: 5, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                    <span className="timer-type" style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '3px', color: 'var(--accent-cyan)', opacity: 0.8 }}>
+                      {type === 'focus' ? t.focus : t.break}
+                    </span>
+                    <span className="timer-text">
+                      {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
+                    </span>
                   </div>
                 </div>
-                <div className="tag-selector slide-up">
-                  {tags.map(t => <button key={t.label} className={`tag-btn ${activeTagItem.label === t.label ? 'active' : ''}`} onClick={() => setActiveTagItem(t)}>{t.icon}<span>{t.label}</span></button>)}
+
+                <div className="tag-selector slide-up" style={{ marginBottom: '20px' }}>
+                  {tags.map(tg => (
+                    <button
+                      key={tg.label}
+                      className={`tag-btn ${activeTagItem.label === tg.label ? 'active' : ''}`}
+                      style={{ '--tag-color': tg.color }}
+                      onClick={() => setActiveTagItem(tg)}
+                    >
+                      {tg.icon}<span>{tg.label}</span>
+                    </button>
+                  ))}
                 </div>
-                <div className="timer-controls slide-up">
-                  <button className="ctrl-btn secondary" onClick={resetTimer} title={t.reset}><RotateCcw size={22} /></button>
-                  <button className="ctrl-btn primary" onClick={() => setIsRunning(!isRunning)}>{isRunning ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" style={{ marginLeft: '4px' }} />}</button>
-                  <button className="ctrl-btn secondary" onClick={handleTimerComplete} title={t.skip}><Check size={22} /></button>
+
+                <div className="controls slide-up">
+                  <button className="control-btn secondary" onClick={resetTimer} title={t.reset}><RotateCcw size={22} /></button>
+                  <button className="control-btn primary" onClick={() => setIsRunning(!isRunning)}>
+                    {isRunning ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" style={{ marginLeft: '4px' }} />}
+                  </button>
+                  <button className="control-btn secondary" onClick={handleTimerComplete} title={t.skip}><Check size={22} /></button>
                 </div>
-                {/* Quote Display [NEW] */}
+
                 <div className="quote-container fade-blur-in">
                   <p className="zen-quote">"{currentQuote}"</p>
                 </div>
