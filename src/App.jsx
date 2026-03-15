@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Pause, RotateCcw, Check, Circle, ListTodo, BarChart3, Clock, Music, X, ChevronLeft, ChevronRight, Focus, Maximize2, Minimize2 } from 'lucide-react';
+import { Play, Pause, RotateCcw, Check, Circle, ListTodo, BarChart3, Clock, Music, X, ChevronLeft, ChevronRight, Focus, Cloud, Wind } from 'lucide-react';
 import { Howl } from 'howler';
 import './index.css';
 
@@ -12,6 +12,7 @@ function App() {
   const [xp, setXp] = useState(0);
   const [totalPomodoros, setTotalPomodoros] = useState(0);
   const [tasksCompleted, setTasksCompleted] = useState(0);
+  const [dailyGoal] = useState(4);
   const xpPerLevel = level * 100;
 
   // Add XP
@@ -45,6 +46,12 @@ function App() {
 
   // Immersive Mode
   const [isImmersive, setIsImmersive] = useState(false);
+
+  // Background Noise State (White Noise Synth)
+  const [noisePlaying, setNoisePlaying] = useState(false);
+  const [noiseVolume, setNoiseVolume] = useState(0.2);
+  const noiseNodeRef = useRef(null);
+
   const toggleImmersive = () => {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen().catch(err => {
@@ -106,6 +113,48 @@ function App() {
     setLofiVolume(vol);
     if (audioRef.current) {
       audioRef.current.volume(vol);
+    }
+  };
+
+  const toggleNoise = () => {
+    if (!noisePlaying) {
+      if (!audioCtxRef.current) audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
+      const ctx = audioCtxRef.current;
+      
+      const bufferSize = 2 * ctx.sampleRate;
+      const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const output = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        output[i] = Math.random() * 2 - 1;
+      }
+
+      const whiteNoise = ctx.createBufferSource();
+      whiteNoise.buffer = noiseBuffer;
+      whiteNoise.loop = true;
+
+      const gainNode = ctx.createGain();
+      gainNode.gain.setValueAtTime(noiseVolume, ctx.currentTime);
+      
+      whiteNoise.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      
+      whiteNoise.start();
+      noiseNodeRef.current = { source: whiteNoise, gain: gainNode };
+      setNoisePlaying(true);
+    } else {
+      if (noiseNodeRef.current) {
+        noiseNodeRef.current.source.stop();
+        noiseNodeRef.current = null;
+      }
+      setNoisePlaying(false);
+    }
+  };
+
+  const changeNoiseVolume = (e) => {
+    const vol = parseFloat(e.target.value);
+    setNoiseVolume(vol);
+    if (noiseNodeRef.current) {
+      noiseNodeRef.current.gain.gain.setValueAtTime(vol, audioCtxRef.current.currentTime);
     }
   };
 
@@ -267,14 +316,6 @@ function App() {
     }));
   };
 
-  const closeApp = () => {
-    if (window.require) {
-      const { app } = window.require('electron');
-      app?.quit();
-    } else {
-      window.close();
-    }
-  };
 
   return (
     <div className={`app-wrapper ${isRunning ? 'is-focusing' : ''} ${isImmersive ? 'is-immersive' : ''}`}>
@@ -310,6 +351,18 @@ function App() {
             </button>
           </div>
 
+          {/* Daily Goal Progress Ring */}
+          <div className="goal-preview" title={`Günlük Hedef: ${totalPomodoros}/${dailyGoal}`}>
+            <svg viewBox="0 0 36 36" className="circular-chart">
+              <path className="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+              <path className="circle" 
+                strokeDasharray={`${Math.min((totalPomodoros / dailyGoal) * 100, 100)}, 100`}
+                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" 
+              />
+            </svg>
+            <div className="goal-text">{totalPomodoros}</div>
+          </div>
+
           <div className="ambient-toggle">
             <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', cursor: 'pointer', paddingBottom: '10px'}} onClick={toggleLofi}>
               <div className={`visualizer ${ambientPlaying ? 'playing' : ''}`}>
@@ -333,6 +386,28 @@ function App() {
                   onChange={changeLofiVolume} 
                   className="volume-slider"
                 />
+
+                <div className="divider"></div>
+
+                <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
+                  <div style={{display: 'flex', alignItems: 'center', gap: '8px', color: noisePlaying ? 'var(--accent-cyan)' : 'var(--text-muted)'}}>
+                    <Wind size={14} />
+                    <span style={{fontSize: '0.75rem'}}>Derin Odak (Gürültü)</span>
+                  </div>
+                  <button className={`toggle-pill ${noisePlaying ? 'active' : ''}`} onClick={toggleNoise}>
+                    {noisePlaying ? 'Açık' : 'Kapalı'}
+                  </button>
+                </div>
+
+                {noisePlaying && (
+                  <input 
+                    type="range" 
+                    min="0" max="0.5" step="0.02" 
+                    value={noiseVolume} 
+                    onChange={changeNoiseVolume} 
+                    className="volume-slider"
+                  />
+                )}
               </div>
             )}
           </div>
@@ -342,6 +417,7 @@ function App() {
         <main className="content-area">
           {/* Header */}
           <header className="header no-drag">
+            <div className="header-spacers"></div>
             <div className="user-profile">
               <div className="level-badge">LVL {level}</div>
               <div className="xp-bar-container">
@@ -350,10 +426,10 @@ function App() {
               <span className="xp-text">{xp}/{xpPerLevel} XP</span>
             </div>
             
-            <button className="close-btn" style={{marginRight: '15px'}} onClick={toggleImmersive}>
+            {/* Immersive Mode Switcher remains but subtle */}
+            <button className="close-btn" onClick={toggleImmersive}>
               {isImmersive ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
             </button>
-            <button className="close-btn" onClick={closeApp}><X size={18} /></button>
           </header>
 
           <div className="tab-render no-drag fade-in">

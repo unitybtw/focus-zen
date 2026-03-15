@@ -9,10 +9,14 @@ let mainWindow;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1024,
-    height: 768,
-    frame: false, // For desktop aesthetic
-    transparent: true, // For glassmorphism
+    width: 1000,
+    height: 800,
+    minWidth: 800,
+    minHeight: 600,
+    titleBarStyle: 'hiddenInset', // Enables macOS traffic lights seamlessly
+    vibrancy: 'under-window', // macOS native blur behind window
+    visualEffectState: 'active',
+    backgroundColor: '#00000000', // Ensures transparency passes through to vibrancy
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: true,
