@@ -1,3 +1,4 @@
+/* global process */
 // Add preload logic if needed.
 window.addEventListener('DOMContentLoaded', () => {
   const replaceText = (selector, text) => {

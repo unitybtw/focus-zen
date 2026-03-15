@@ -29,6 +29,9 @@ function App() {
   const defaultTime = 25 * 60;
   const breakTime = 5 * 60;
   const [timeLeft, setTimeLeft] = useState(defaultTime);
+  const [isRunning, setIsRunning] = useState(false);
+  const [isBreak, setIsBreak] = useState(false);
+
   const [ambientPlaying, setAmbientPlaying] = useState(false);
   const audioRef = useRef(null); // Reference for Howler instance
 
@@ -64,7 +67,7 @@ function App() {
     "Büyük işler başarmak için, sadece harekete geçmek yetmez.",
     "Zor yollar, çoğu zaman en güzel yerlere çıkar."
   ];
-  const [currentQuote] = useState(quotes[Math.floor(Math.random() * quotes.length)]);
+  const [currentQuote] = useState(() => quotes[Math.floor(Math.random() * quotes.length)]);
 
   // Tasks State
   const [tasks, setTasks] = useState([
@@ -75,32 +78,6 @@ function App() {
 
   // Refs for audio (Using browser oscillator API for futuristic beep sounds)
   const audioCtxRef = useRef(null);
-
-  useEffect(() => {
-    let interval;
-    if (isRunning && timeLeft > 0) {
-      interval = setInterval(() => {
-        setTimeLeft((prev) => prev - 1);
-      }, 1000);
-    } else if (timeLeft === 0) {
-      setIsRunning(false);
-      handleSessionEnd();
-    }
-    return () => clearInterval(interval);
-  }, [isRunning, timeLeft]);
-
-  const handleSessionEnd = () => {
-    playAlarmSound();
-    if (!isBreak) {
-      setTotalPomodoros(prev => prev + 1);
-      gainXp(50); // 50 XP for focusing
-      setIsBreak(true);
-      setTimeLeft(breakTime);
-    } else {
-      setIsBreak(false);
-      setTimeLeft(defaultTime);
-    }
-  };
 
   // Sound Synthesizer (No external files needed)
   const playAlarmSound = () => {
@@ -124,6 +101,34 @@ function App() {
     osc.start();
     osc.stop(ctx.currentTime + 0.5);
   };
+
+  const handleSessionEnd = () => {
+    playAlarmSound();
+    if (!isBreak) {
+      setTotalPomodoros(prev => prev + 1);
+      gainXp(50); // 50 XP for focusing
+      setIsBreak(true);
+      setTimeLeft(breakTime);
+    } else {
+      setIsBreak(false);
+      setTimeLeft(defaultTime);
+    }
+  };
+
+  useEffect(() => {
+    let interval;
+    if (isRunning && timeLeft > 0) {
+      interval = setInterval(() => {
+        setTimeLeft((prev) => prev - 1);
+      }, 1000);
+    } else if (timeLeft === 0 && isRunning) {
+      setIsRunning(false);
+      handleSessionEnd();
+    }
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isRunning, timeLeft]);
+
 
   const playLevelUpSound = () => {
     if (!audioCtxRef.current) audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
