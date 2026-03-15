@@ -196,7 +196,15 @@ body {
 .timer-text { font-size: 6rem; font-weight: 400; color: var(--text-primary); font-variant-numeric: tabular-nums; letter-spacing: -2px; }
 .is-focusing .timer-text { color: var(--accent-cyan); text-shadow: 0 0 20px rgba(59, 130, 246, 0.2); font-weight: 500; }
 
-.controls { display: flex; justify-content: center; gap: 20px; width: 100%; }
+.controls { display: flex; justify-content: center; gap: 20px; width: 100%; margin-bottom: 25px; }
+
+.time-selectors { display: flex; gap: 10px; justify-content: center; width: 100%; }
+.time-btn { background: rgba(255, 255, 255, 0.05); color: var(--text-muted); border: 1px solid var(--glass-border); padding: 5px 12px; border-radius: 8px; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; }
+.time-btn:hover { background: rgba(255, 255, 255, 0.1); color: var(--text-primary); }
+.time-btn.active { background: var(--accent-cyan-dim); color: var(--accent-cyan); border-color: var(--accent-cyan); }
+
+.volume-slider { width: 100%; margin-top: 10px; cursor: pointer; accent-color: var(--accent-cyan); }
+
 
 .quote-container {
   margin-top: 40px;

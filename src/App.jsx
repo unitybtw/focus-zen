@@ -26,13 +26,14 @@ function App() {
   };
 
   // Timer State
-  const defaultTime = 25 * 60;
+  const [defaultTime, setDefaultTime] = useState(25 * 60);
   const breakTime = 5 * 60;
   const [timeLeft, setTimeLeft] = useState(defaultTime);
   const [isRunning, setIsRunning] = useState(false);
   const [isBreak, setIsBreak] = useState(false);
 
   const [ambientPlaying, setAmbientPlaying] = useState(false);
+  const [lofiVolume, setLofiVolume] = useState(0.4);
   const audioRef = useRef(null); // Reference for Howler instance
 
   useEffect(() => {
@@ -40,15 +41,21 @@ function App() {
     audioRef.current = new Howl({
       src: ['/lofi.mp3'],
       loop: true,
-      volume: 0.4,
+      volume: lofiVolume,
       html5: true // Force HTML5 Audio so it streams properly without filling RAM
     });
+
+    // Request notification permission on boot
+    if ("Notification" in window && Notification.permission !== "granted") {
+      Notification.requestPermission();
+    }
 
     return () => {
       if (audioRef.current) {
         audioRef.current.unload();
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const toggleLofi = () => {
@@ -58,6 +65,14 @@ function App() {
     } else {
       audioRef.current.pause();
       setAmbientPlaying(false);
+    }
+  };
+
+  const changeLofiVolume = (e) => {
+    const vol = parseFloat(e.target.value);
+    setLofiVolume(vol);
+    if (audioRef.current) {
+      audioRef.current.volume(vol);
     }
   };
 
@@ -79,31 +94,46 @@ function App() {
   // Refs for audio (Using browser oscillator API for futuristic beep sounds)
   const audioCtxRef = useRef(null);
 
-  // Sound Synthesizer (No external files needed)
+  // Sound Synthesizer (No external files needed) - Zen Bell
   const playAlarmSound = () => {
     if (!audioCtxRef.current) audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
     const ctx = audioCtxRef.current;
     
-    // Cyberpunk synth beep
-    const osc = ctx.createOscillator();
-    const gainNode = ctx.createGain();
+    // Zen Bowl frequencies
+    const frequencies = [432, 864, 1296];
     
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(440, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.1);
-    
-    gainNode.gain.setValueAtTime(0, ctx.currentTime);
-    gainNode.gain.linearRampToValueAtTime(0.5, ctx.currentTime + 0.05);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
-    
-    osc.connect(gainNode);
-    gainNode.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.5);
+    frequencies.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+      
+      gainNode.gain.setValueAtTime(0, ctx.currentTime);
+      // Fade in quickly
+      gainNode.gain.linearRampToValueAtTime(0.3 / (i + 1), ctx.currentTime + 0.1);
+      // Long fading resonance
+      gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 3.5);
+      
+      osc.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 4);
+    });
   };
 
   const handleSessionEnd = () => {
     playAlarmSound();
+
+    // Trigger Native Notification
+    if ("Notification" in window && Notification.permission === "granted") {
+      new Notification("FocusZen", {
+        body: isBreak ? "Mola sona erdi, yeniden odaklanma vakti!" : "Odak süren bitti, harika çalıştın. Biraz dinlen.",
+        icon: "/icon.png",
+        silent: true // Custom synth plays instead of OS ping
+      });
+    }
+
     if (!isBreak) {
       setTotalPomodoros(prev => prev + 1);
       gainXp(50); // 50 XP for focusing
@@ -158,6 +188,14 @@ function App() {
   const resetTimer = () => {
     setIsRunning(false);
     setTimeLeft(isBreak ? breakTime : defaultTime);
+  };
+
+  const changeDefaultTime = (minutes) => {
+    if (!isRunning && !isBreak) {
+      const newTime = minutes * 60;
+      setDefaultTime(newTime);
+      setTimeLeft(newTime);
+    }
   };
 
   const formatTime = (seconds) => {
@@ -231,12 +269,24 @@ function App() {
             </button>
           </div>
 
-          <div className="ambient-toggle" onClick={toggleLofi}>
-            <div className={`visualizer ${ambientPlaying ? 'playing' : ''}`}>
-              <span></span><span></span><span></span><span></span>
+          <div className="ambient-toggle">
+            <div style={{display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', marginBottom: ambientPlaying ? '10px' : '0'}} onClick={toggleLofi}>
+              <div className={`visualizer ${ambientPlaying ? 'playing' : ''}`}>
+                <span></span><span></span><span></span><span></span>
+              </div>
+              <Music size={16} />
+              <span style={{fontSize: '0.8rem'}}>Lo-Fi</span>
             </div>
-            <Music size={16} />
-            <span style={{fontSize: '0.8rem'}}>Lo-Fi</span>
+            
+            {ambientPlaying && (
+              <input 
+                type="range" 
+                min="0" max="1" step="0.05" 
+                value={lofiVolume} 
+                onChange={changeLofiVolume} 
+                className="volume-slider no-drag"
+              />
+            )}
           </div>
         </nav>
 
@@ -276,6 +326,15 @@ function App() {
                     <RotateCcw size={20} />
                   </button>
                 </div>
+
+                {!isRunning && !isBreak && (
+                  <div className="time-selectors">
+                    <button className={`time-btn ${defaultTime === 15*60 ? 'active' : ''}`} onClick={() => changeDefaultTime(15)}>15</button>
+                    <button className={`time-btn ${defaultTime === 25*60 ? 'active' : ''}`} onClick={() => changeDefaultTime(25)}>25</button>
+                    <button className={`time-btn ${defaultTime === 45*60 ? 'active' : ''}`} onClick={() => changeDefaultTime(45)}>45</button>
+                    <button className={`time-btn ${defaultTime === 60*60 ? 'active' : ''}`} onClick={() => changeDefaultTime(60)}>60</button>
+                  </div>
+                )}
 
                 <div className="quote-container">
                    <p>"{currentQuote}"</p>
