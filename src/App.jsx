@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Pause, RotateCcw, Check, Circle, ListTodo, BarChart3, Clock, Music, X, ChevronLeft, ChevronRight, Focus, Cloud, Wind, Maximize2, Minimize2, Zap, Tag, History } from 'lucide-react';
+import { Play, Pause, RotateCcw, Check, Circle, ListTodo, BarChart3, Clock, Music, X, ChevronLeft, ChevronRight, Focus, Cloud, Wind, Zap, Tag, History, Trophy, Target, TrendingUp } from 'lucide-react';
 import { Howl } from 'howler';
 import './index.css';
 
@@ -44,10 +44,7 @@ function App() {
     { id: 3, name: "Chillhop FM", file: "https://lofi.stream.laut.fm/lofi" }
   ];
 
-  // Immersive Mode
-  const [isImmersive, setIsImmersive] = useState(false);
-
-  // Focus History & Tags
+  // Main Application State
   const [sessionTag, setSessionTag] = useState('İş'); // İş, Eğitim, Yaratıcı, Kişisel
   const [focusHistory, setFocusHistory] = useState([]);
   
@@ -58,24 +55,30 @@ function App() {
     { label: 'Kişisel', icon: '🧘', color: '#f43f5e' }
   ];
 
+  // Persistence: Load on startup
+  useEffect(() => {
+    const saved = localStorage.getItem('focusZen_progress');
+    if (saved) {
+      const data = JSON.parse(saved);
+      setLevel(data.level || 1);
+      setXp(data.xp || 0);
+      setTotalPomodoros(data.totalPomodoros || 0);
+      setTasksCompleted(data.tasksCompleted || 0);
+      setFocusHistory(data.focusHistory || []);
+    }
+  }, []);
+
+  // Persistence: Save on change
+  useEffect(() => {
+    const data = { level, xp, totalPomodoros, tasksCompleted, focusHistory };
+    localStorage.setItem('focusZen_progress', JSON.stringify(data));
+  }, [level, xp, totalPomodoros, tasksCompleted, focusHistory]);
+
   // Background Noise State (White Noise Synth)
   const [noisePlaying, setNoisePlaying] = useState(false);
   const [noiseVolume, setNoiseVolume] = useState(0.2);
   const noiseNodeRef = useRef(null);
 
-  const toggleImmersive = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(err => {
-        console.error("Error attempting to open fullscreen", err);
-      });
-      setIsImmersive(true);
-    } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      }
-      setIsImmersive(false);
-    }
-  };
 
   useEffect(() => {
     // Unload previous track if exists
@@ -339,7 +342,7 @@ function App() {
 
 
   return (
-    <div className={`app-wrapper ${isRunning ? 'is-focusing' : ''} ${isImmersive ? 'is-immersive' : ''}`}>
+    <div className={`app-wrapper ${isRunning ? 'is-focusing' : ''}`}>
       {/* Background ambient lighting effects */}
       <div className="ambient-blob blob-1"></div>
       <div className="ambient-blob blob-2"></div>
@@ -452,11 +455,6 @@ function App() {
               </div>
               <span className="xp-text">{xp}/{xpPerLevel} XP</span>
             </div>
-            
-            {/* Immersive Mode Switcher remains but subtle */}
-            <button className="close-btn" onClick={toggleImmersive}>
-              {isImmersive ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
-            </button>
           </header>
 
           <div className="tab-render no-drag fade-in">
@@ -568,16 +566,19 @@ function App() {
                 
                 <div className="stats-grid">
                   <div className="stat-card">
+                    <div className="stat-icon-wrapper"><Trophy size={18} /></div>
                     <h3>Gelişim</h3>
                     <div className="stat-value highlight">{level}</div>
                     <p className="stat-desc">Mevcut Seviye</p>
                   </div>
                   <div className="stat-card">
+                    <div className="stat-icon-wrapper"><Target size={18} /></div>
                     <h3>Odak</h3>
                     <div className="stat-value">{totalPomodoros}</div>
                     <p className="stat-desc">Oturum</p>
                   </div>
                   <div className="stat-card">
+                    <div className="stat-icon-wrapper"><TrendingUp size={18} /></div>
                     <h3>Başarı</h3>
                     <div className="stat-value">{tasksCompleted}</div>
                     <p className="stat-desc">Görev Tamamlandı</p>

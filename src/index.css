@@ -243,13 +243,26 @@ body {
 }
 .tag-btn:hover { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.2); }
 .tag-btn.active { 
-  background: rgba(var(--tag-color-rgb), 0.1); 
+  background: var(--tag-color); 
   border-color: var(--tag-color); 
-  color: var(--text-primary);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  color: white;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
 }
 .tag-btn.active .tag-icon { transform: scale(1.2); }
-.tag-label { font-size: 0.85rem; font-weight: 500; }
+.tag-label { font-size: 0.85rem; font-weight: 600; }
+
+/* Professional Stats Decor */
+.stat-icon-wrapper {
+  width: 40px; height: 40px; border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 20px; color: var(--accent-cyan);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.stat-card:hover .stat-icon-wrapper {
+  background: var(--accent-cyan); color: var(--bg-core);
+  transform: rotate(-10deg) scale(1.1);
+}
 
 /* History Section */
 .history-item {
