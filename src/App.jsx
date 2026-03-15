@@ -85,9 +85,12 @@ function App() {
       appSettings: 'App Settings', timeSettings: 'Time Settings (Minutes)', automation: 'Automation',
       autoBreak: 'Auto Start Breaks', autoFocus: 'Auto Start Focus',
       dataPortability: 'Data Portability', export: 'Export Data', import: 'Import Data',
-      on: 'On', off: 'Off'
+      on: 'On', off: 'Off', quickControl: 'Hızlı Kontrol'
     }
   }[lang];
+
+  // System Tray Simulation [NEW]
+  const [trayOpen, setTrayOpen] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('lang', lang);
@@ -432,6 +435,31 @@ function App() {
 
       <div className="ambient-blob blob-1"></div>
       <div className="ambient-blob blob-2"></div>
+
+      {/* Simulated System Tray (Mini Controller) [NEW] */}
+      <div className={`mini-tray-controller ${trayOpen ? 'open' : ''}`}>
+        <button className="tray-trigger" onClick={() => setTrayOpen(!trayOpen)}>
+          <Clock size={18} />
+        </button>
+        {trayOpen && (
+          <div className="tray-panel fade-blur-in">
+            <div className="tray-header">
+              <span>{lang === 'tr' ? 'Hızlı Kontrol' : 'Quick Control'}</span>
+              <div className={`status-dot ${type === 'focus' ? 'focus' : 'break'}`}></div>
+            </div>
+            <div className="tray-timer">
+              {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
+            </div>
+            <div className="tray-controls">
+              <button onClick={() => setIsRunning(!isRunning)}>
+                {isRunning ? <Pause size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" />}
+              </button>
+              <button onClick={resetTimer}><RotateCcw size={16} /></button>
+              <button onClick={handleTimerComplete}><Check size={16} /></button>
+            </div>
+          </div>
+        )}
+      </div>
       
       <div className="glass-container">
         <div className="drag-region"></div>

@@ -850,3 +850,102 @@ body {
   0% { opacity: 0; filter: blur(12px); transform: scale(0.98); }
   100% { opacity: 1; filter: blur(0); transform: scale(1); }
 }
+
+/* 8. MINI-TRAY CONTROLLER [NEW] */
+.mini-tray-controller {
+  position: fixed;
+  bottom: 25px;
+  right: 25px;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.tray-trigger {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: var(--glass-shadow);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  -webkit-app-region: no-drag;
+}
+
+.tray-trigger:hover {
+  transform: scale(1.1);
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+}
+
+.mini-tray-controller.open .tray-trigger {
+  background: var(--accent-cyan);
+  color: var(--bg-core);
+  border-color: var(--accent-cyan);
+}
+
+.tray-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 15px;
+  width: 180px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tray-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.tray-timer {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.tray-controls {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.tray-controls button {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-border);
+  color: var(--text-primary);
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tray-controls button:hover {
+  background: var(--accent-cyan-dim);
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+}
