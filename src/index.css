@@ -2,9 +2,16 @@
   --bg-core: #0a0a0a;
   --bg-gradient-1: #141414;
   --bg-gradient-2: #0d0d0d;
-  --accent-cyan: #3b82f6; /* Modern Blue instead of aggressive neon */
-  --accent-cyan-dim: rgba(59, 130, 246, 0.15);
-  --accent-magenta: #10b981; /* Green for completion */
+  
+  /* Default: Midnight */
+  --accent-primary: #3b82f6;
+  --accent-primary-dim: rgba(59, 130, 246, 0.15);
+  --accent-secondary: #10b981;
+  
+  --accent-cyan: var(--accent-primary);
+  --accent-cyan-dim: var(--accent-primary-dim);
+  --accent-magenta: var(--accent-secondary);
+  
   --text-primary: #f3f4f6;
   --text-muted: #9ca3af;
   
@@ -17,6 +24,24 @@
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+[data-theme='forest'] {
+  --accent-primary: #10b981;
+  --accent-primary-dim: rgba(16, 185, 129, 0.15);
+  --accent-secondary: #f59e0b;
+}
+
+[data-theme='ember'] {
+  --accent-primary: #f43f5e;
+  --accent-primary-dim: rgba(244, 63, 94, 0.15);
+  --accent-secondary: #fbbf24;
+}
+
+[data-theme='lavender'] {
+  --accent-primary: #8b5cf6;
+  --accent-primary-dim: rgba(139, 92, 246, 0.15);
+  --accent-secondary: #ec4899;
 }
 
 * {
@@ -230,7 +255,16 @@ body {
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes slideUp { from { opacity: 0; transform: translateY(40px) scale(0.95); filter: blur(15px); } to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); } }
 
-/* Session Tag Selector */
+/* Theme Switcher Overlay */
+.theme-bubble {
+  width: 20px; height: 20px; border-radius: 50%; cursor: pointer;
+  border: 2px solid transparent; transition: 0.3s;
+}
+.theme-bubble.active { border-color: white; transform: scale(1.2); }
+.theme-selector-bar {
+  display: flex; gap: 8px; background: rgba(0,0,0,0.3); 
+  padding: 6px 10px; border-radius: 20px; border: 1px solid var(--glass-border);
+}
 .tag-selector {
   display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
   margin-top: 10px; width: 100%; max-width: 450px;

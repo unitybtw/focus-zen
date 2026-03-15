@@ -45,6 +45,7 @@ function App() {
   ];
 
   // Main Application State
+  const [theme, setTheme] = useState('midnight'); // midnight, forest, ember, lavender
   const [sessionTag, setSessionTag] = useState('İş'); // İş, Eğitim, Yaratıcı, Kişisel
   const [focusHistory, setFocusHistory] = useState([]);
   
@@ -65,14 +66,16 @@ function App() {
       setTotalPomodoros(data.totalPomodoros || 0);
       setTasksCompleted(data.tasksCompleted || 0);
       setFocusHistory(data.focusHistory || []);
+      setTheme(data.theme || 'midnight');
     }
   }, []);
 
   // Persistence: Save on change
   useEffect(() => {
-    const data = { level, xp, totalPomodoros, tasksCompleted, focusHistory };
+    const data = { level, xp, totalPomodoros, tasksCompleted, focusHistory, theme };
     localStorage.setItem('focusZen_progress', JSON.stringify(data));
-  }, [level, xp, totalPomodoros, tasksCompleted, focusHistory]);
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [level, xp, totalPomodoros, tasksCompleted, focusHistory, theme]);
 
   // Background Noise State (White Noise Synth)
   const [noisePlaying, setNoisePlaying] = useState(false);
@@ -443,6 +446,23 @@ function App() {
           <header className="header no-drag">
             <div className="header-spacers"></div>
             
+            <div className="theme-selector-bar">
+              {[
+                { id: 'midnight', color: '#3b82f6' },
+                { id: 'forest', color: '#10b981' },
+                { id: 'ember', color: '#f43f5e' },
+                { id: 'lavender', color: '#8b5cf6' }
+              ].map(t => (
+                <div 
+                  key={t.id} 
+                  className={`theme-bubble ${theme === t.id ? 'active' : ''}`}
+                  style={{ background: t.color }}
+                  onClick={() => setTheme(t.id)}
+                  title={`${t.id.charAt(0).toUpperCase() + t.id.slice(1)} Teması`}
+                />
+              ))}
+            </div>
+
             <div className="streak-badge" title="Günlük Odak Serisi">
               <Zap size={14} fill="currentColor" />
               <span>3 Gün</span>
